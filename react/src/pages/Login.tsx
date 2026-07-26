@@ -22,6 +22,7 @@ import {
 } from '@ant-design/icons';
 import { useAuth } from '../features/auth/context/AuthContext';
 import { getApiErrorMessage } from '../services/api/client';
+import { resolveHomeRoute } from '../features/auth/utils/resolveHomeRoute';
 
 const { Content } = Layout;
 const { Title, Text, Paragraph, Link } = Typography;
@@ -40,8 +41,8 @@ const Login = () => {
         setErrorMessage(null);
         setSubmitting(true);
         try {
-            await login({ email: values.email, password: values.password });
-            navigate('/');
+            const loggedInUser = await login({ email: values.email, password: values.password });
+            navigate(resolveHomeRoute(loggedInUser));
         } catch (err) {
             setErrorMessage(getApiErrorMessage(err, 'Unable to log in. Please check your credentials.'));
         } finally {

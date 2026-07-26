@@ -26,6 +26,7 @@ import {
 import { useAuth } from '../features/auth/context/AuthContext';
 import { getApiErrorMessage } from '../services/api/client';
 import type { AccountType } from '../features/auth/api/authApi';
+import { resolveHomeRoute } from '../features/auth/utils/resolveHomeRoute';
 
 const { Content } = Layout;
 const { Title, Text, Paragraph, Link } = Typography;
@@ -56,7 +57,7 @@ const Register = () => {
         setErrorMessage(null);
         setSubmitting(true);
         try {
-            await register({
+            const newUser = await register({
                 firstName: values.firstName,
                 lastName: values.lastName,
                 email: values.email,
@@ -64,7 +65,7 @@ const Register = () => {
                 password: values.password,
                 accountType: values.accountType,
             });
-            navigate('/');
+            navigate(resolveHomeRoute(newUser));
         } catch (err) {
             setErrorMessage(getApiErrorMessage(err, 'Unable to create your account. Please try again.'));
         } finally {
