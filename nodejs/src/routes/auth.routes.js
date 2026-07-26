@@ -3,10 +3,9 @@ const bcrypt = require('bcryptjs');
 const { findByEmail, createUser, toPublicUser } = require('../models/userModel');
 const { signToken, setAuthCookie, clearAuthCookie, attachUser, requireAuth } = require('../middleware/auth');
 const { logAudit, clientIp } = require('../utils/audit');
+const { isValidEmail, isValidPassword, MIN_PASSWORD_LENGTH } = require('../utils/validators');
 
 const router = express.Router();
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 router.post('/register', async (req, res) => {
     const { firstName, lastName, email, phone, password, accountType } = req.body || {};
@@ -14,11 +13,11 @@ router.post('/register', async (req, res) => {
     if (!firstName || !lastName || !email || !password || !accountType) {
         return res.status(400).json({ ok: false, error: 'Missing required fields' });
     }
-    if (!EMAIL_RE.test(email)) {
+    if (!isValidEmail(email)) {
         return res.status(400).json({ ok: false, error: 'Invalid email address' });
     }
-    if (String(password).length < 8) {
-        return res.status(400).json({ ok: false, error: 'Password must be at least 8 characters' });
+    if (!isValidPassword(password)) {
+        return res.status(400).json({ ok: false, error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters` });
     }
     if (!['renter', 'owner', 'both'].includes(accountType)) {
         return res.status(400).json({ ok: false, error: 'Invalid account type' });

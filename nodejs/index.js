@@ -1,6 +1,7 @@
 const os = require('os');
 const { createApp } = require('./src/app');
 const { migrate } = require('./src/db/migrate');
+const { bootstrapSuperAdmin } = require('./src/db/bootstrapSuperAdmin');
 const { POSTGRES_URL } = require('./src/db/pool');
 
 const PORT = process.env.PORT || 3000;
@@ -66,8 +67,9 @@ app.get('/info', (_req, res) => {
 });
 
 migrate()
+    .then(() => bootstrapSuperAdmin())
     .catch((err) => {
-        console.error('❌ Failed to run migrations:', err.message);
+        console.error('❌ Startup task failed:', err.message);
     })
     .finally(() => {
         app.listen(PORT, () => console.log(`✅ Listening on ${PORT}`));

@@ -5,6 +5,7 @@ const cookieParser = require('cookie-parser');
 const authRoutes = require('./routes/auth.routes');
 const listingsRoutes = require('./routes/listings.routes');
 const bookingsRoutes = require('./routes/bookings.routes');
+const adminRoutes = require('./routes/admin.routes');
 
 const REACT_URL = process.env.REACT_URL || 'http://localhost:5173';
 
@@ -25,6 +26,7 @@ function createApp() {
     app.use('/api/auth', authRoutes);
     app.use('/api/items', listingsRoutes);
     app.use('/api/bookings', bookingsRoutes);
+    app.use('/api/admin', adminRoutes);
 
     // Centralized error handler — keeps unexpected DB/JS errors from leaking stack traces.
     app.use((err, _req, res, _next) => {

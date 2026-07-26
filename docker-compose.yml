@@ -16,6 +16,8 @@ services:
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
       - COOKIE_SECURE=${COOKIE_SECURE:-false}
       - REACT_URL=${REACT_URL:-http://localhost:5173}
+      - SUPER_ADMIN_EMAIL=${SUPER_ADMIN_EMAIL}
+      - SUPER_ADMIN_PASSWORD=${SUPER_ADMIN_PASSWORD}
     depends_on:
       postgres:
         condition: service_healthy
