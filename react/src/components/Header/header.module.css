@@ -1,0 +1,110 @@
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: #ffffff;
+    border-bottom: 1px solid #d9e1f2;
+    height: 84px;
+    display: flex;
+    align-items: center;
+}
+
+.headerDiv {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.logoContainer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.logoImage {
+    width: 46px;
+    height: 46px;
+    object-fit: contain;
+    border-radius: 10px;
+}
+
+@media (min-width: 992px) {
+    .logoImage {
+        width: 52px;
+        height: 52px;
+    }
+}
+
+.logo {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: #2B2E4A;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 18px;
+}
+
+.logoTextContainer {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+}
+
+.logoText {
+    font-size: 18px;
+    font-weight: 700;
+    color: #2B2E4A;
+}
+
+.logoTagLine {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.headerSearchContainer {
+    flex: 1;
+}
+
+.headerSearch {
+    border-radius: 999px;
+    height: 46px;
+}
+
+.lenderButton {
+    font-weight: 500
+}
+
+.spanBar {
+    color: #c7cdd8;
+    font-size: 18px;
+}
+
+.renterButton {
+    background: #2B2E4A;
+    border-color: #2B2E4A;
+    font-weight: 600;
+}
+
+.burger {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.desktopMode {
+
+}
+
+.smallerMode {
+
+}
