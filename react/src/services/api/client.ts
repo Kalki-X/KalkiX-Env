@@ -3,6 +3,10 @@ import axios from "axios";
 // Backend URL is injected by docker-compose as VITE_API_URL; falls back to local dev default.
 const baseURL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
+/** Raw base URL, for the handful of places (Google sign-in) that need a full-page
+ *  redirect rather than an axios call — OAuth can't be done via fetch/XHR. */
+export const apiBaseUrl = baseURL;
+
 export const apiClient = axios.create({
     baseURL,
     withCredentials: true, // send/receive the httpOnly auth cookie

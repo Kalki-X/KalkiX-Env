@@ -2,6 +2,9 @@ import { createBrowserRouter } from "react-router-dom";
 import Home from "../pages/Home";
 import Login from "../pages/Login";
 import Register from "../pages/Registration";
+import ForgotPassword from "../pages/ForgotPassword";
+import ResetPassword from "../pages/ResetPassword";
+import GoogleAuthComplete from "../pages/GoogleAuthComplete";
 import ProtectedRoute from "./ProtectedRoute";
 import DashboardLayout from "../layouts/DashboardLayout";
 import SuperAdminDashboard from "../pages/admin/SuperAdminDashboard";
@@ -22,6 +25,18 @@ export const router = createBrowserRouter([
     {
         path: "/register",
         element: <Register />
+    },
+    {
+        path: "/forgot-password",
+        element: <ForgotPassword />
+    },
+    {
+        path: "/reset-password",
+        element: <ResetPassword />
+    },
+    {
+        path: "/auth/complete",
+        element: <GoogleAuthComplete />
     },
     {
         path: "/test",

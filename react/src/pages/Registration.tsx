@@ -24,7 +24,7 @@ import {
     UserAddOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../features/auth/context/AuthContext';
-import { getApiErrorMessage } from '../services/api/client';
+import { getApiErrorMessage, apiBaseUrl } from '../services/api/client';
 import type { AccountType } from '../features/auth/api/authApi';
 import { resolveHomeRoute } from '../features/auth/utils/resolveHomeRoute';
 
@@ -46,12 +46,20 @@ interface RegisterFormValues {
 const Register = () => {
     const navigate = useNavigate();
     const { register } = useAuth();
+    const [form] = Form.useForm<RegisterFormValues>();
     const [submitting, setSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     useEffect(() => {
         document.title = 'GearShare - Register';
     }, []);
+
+    const handleGoogleSignUp = () => {
+        // Carry whatever account type is currently selected so a brand-new Google
+        // account gets the right renter/lender capability flags; defaults to renter.
+        const accountType = form.getFieldValue('accountType') || 'renter';
+        window.location.href = `${apiBaseUrl}/api/auth/google?intent=${accountType}`;
+    };
 
     const onFinish = async (values: RegisterFormValues) => {
         setErrorMessage(null);
@@ -198,6 +206,7 @@ const Register = () => {
                                     block
                                     size="large"
                                     icon={<GoogleOutlined />}
+                                    onClick={handleGoogleSignUp}
                                     style={{
                                         height: 46,
                                         borderRadius: 14,
@@ -220,7 +229,7 @@ const Register = () => {
                                     />
                                 )}
 
-                                <Form layout="vertical" onFinish={onFinish} requiredMark={false}>
+                                <Form form={form} layout="vertical" onFinish={onFinish} requiredMark={false}>
                                     <Row gutter={16}>
                                         <Col xs={24} md={12}>
                                             <Form.Item

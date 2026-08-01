@@ -1,4 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../features/auth/context/AuthContext';
+import { resolveHomeRoute } from '../features/auth/utils/resolveHomeRoute';
 import {
     Layout,
     Input,
@@ -145,12 +148,21 @@ const Home = () => {
     const [howItWorksMode, setHowItWorksMode] = useState<'renters' | 'owners'>('renters');
     const [drawerOpen, setDrawerOpen] = useState(false);
     const screens = useBreakpoint();
+    const navigate = useNavigate();
+    const { user } = useAuth();
 
     const isMobileOrTablet = !screens.lg;
 
     useEffect(() => {
         document.title = 'GearShare - Home';
     }, []);
+
+    // Already signed in -> go straight to their dashboard. Signed out -> log in first.
+    // Used by every "Start Renting" / "Become a lender" call-to-action on this page.
+    const goToAccount = () => {
+        setDrawerOpen(false);
+        navigate(user ? resolveHomeRoute(user) : '/login');
+    };
 
     const howItWorksData = howItWorksMode === 'renters' ? renterSteps : ownerSteps;
 
@@ -231,7 +243,7 @@ const Home = () => {
                     {/* Desktop actions */}
                     {!isMobileOrTablet && (
                         <Space size="middle" align="center">
-                            <Button type="text" style={{ fontWeight: 500 }}>
+                            <Button type="text" style={{ fontWeight: 500 }} onClick={goToAccount}>
                                 Become a lender
                             </Button>
 
@@ -245,6 +257,7 @@ const Home = () => {
                                     borderColor: '#2B2E4A',
                                     fontWeight: 600,
                                 }}
+                                onClick={goToAccount}
                             >
                                 Start Renting
                             </Button>
@@ -283,7 +296,7 @@ const Home = () => {
                 width={320}
             >
                 <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-                    <Button type="text" block style={{ textAlign: 'left', height: 42 }}>
+                    <Button type="text" block style={{ textAlign: 'left', height: 42 }} onClick={goToAccount}>
                         Become a lender
                     </Button>
 
@@ -296,6 +309,7 @@ const Home = () => {
                             borderColor: '#2B2E4A',
                             fontWeight: 600,
                         }}
+                        onClick={goToAccount}
                     >
                         Start Renting
                     </Button>

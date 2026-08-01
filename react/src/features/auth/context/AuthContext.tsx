@@ -15,6 +15,9 @@ interface AuthContextValue {
     login: (payload: LoginPayload) => Promise<AuthUser>;
     register: (payload: RegisterPayload) => Promise<AuthUser>;
     logout: () => Promise<void>;
+    /** Re-reads the current user from the auth cookie — used after a redirect-based
+     *  flow (Google sign-in) where we can't get the user back as a direct call result. */
+    refresh: () => Promise<AuthUser | null>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -53,7 +56,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
     }, []);
 
-    const value = useMemo(() => ({ user, loading, login, register, logout }), [user, loading, login, register, logout]);
+    const refresh = useCallback(async () => {
+        const refreshedUser = await fetchCurrentUser();
+        setUser(refreshedUser);
+        return refreshedUser;
+    }, []);
+
+    const value = useMemo(
+        () => ({ user, loading, login, register, logout, refresh }),
+        [user, loading, login, register, logout, refresh]
+    );
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

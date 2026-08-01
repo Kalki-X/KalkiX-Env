@@ -27,6 +27,7 @@ export interface RegisterPayload {
 export interface LoginPayload {
     email: string;
     password: string;
+    remember?: boolean;
 }
 
 export async function registerUser(payload: RegisterPayload): Promise<AuthUser> {
@@ -50,4 +51,14 @@ export async function fetchCurrentUser(): Promise<AuthUser | null> {
     } catch {
         return null;
     }
+}
+
+export async function requestPasswordReset(email: string): Promise<string> {
+    const { data } = await apiClient.post("/api/auth/forgot-password", { email });
+    return data.message as string;
+}
+
+export async function resetPassword(token: string, password: string): Promise<string> {
+    const { data } = await apiClient.post("/api/auth/reset-password", { token, password });
+    return data.message as string;
 }

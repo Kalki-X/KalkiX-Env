@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
     Layout,
     Row,
@@ -21,27 +21,47 @@ import {
     LoginOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../features/auth/context/AuthContext';
-import { getApiErrorMessage } from '../services/api/client';
+import { getApiErrorMessage, apiBaseUrl } from '../services/api/client';
 import { resolveHomeRoute } from '../features/auth/utils/resolveHomeRoute';
 
 const { Content } = Layout;
 const { Title, Text, Paragraph, Link } = Typography;
 
+const GOOGLE_ERROR_MESSAGES: Record<string, string> = {
+    google_not_configured: 'Google sign-in is not set up on this environment yet.',
+    google_auth_failed: "We couldn't complete Google sign-in. Please try again.",
+};
+
 const Login = () => {
     const navigate = useNavigate();
     const { login } = useAuth();
+    const [searchParams] = useSearchParams();
     const [submitting, setSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     useEffect(() => {
         document.title = 'GearShare - Login';
+        const error = searchParams.get('error');
+        if (error) {
+            setErrorMessage(GOOGLE_ERROR_MESSAGES[error] || 'Something went wrong. Please try again.');
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const onFinish = async (values: { email: string; password: string }) => {
+    const handleGoogleSignIn = () => {
+        // Full-page redirect, not an axios call — OAuth has to leave the SPA.
+        window.location.href = `${apiBaseUrl}/api/auth/google`;
+    };
+
+    const onFinish = async (values: { email: string; password: string; remember?: boolean }) => {
         setErrorMessage(null);
         setSubmitting(true);
         try {
-            const loggedInUser = await login({ email: values.email, password: values.password });
+            const loggedInUser = await login({
+                email: values.email,
+                password: values.password,
+                remember: values.remember,
+            });
             navigate(resolveHomeRoute(loggedInUser));
         } catch (err) {
             setErrorMessage(getApiErrorMessage(err, 'Unable to log in. Please check your credentials.'));
@@ -183,6 +203,7 @@ const Login = () => {
                                     block
                                     size="large"
                                     icon={<GoogleOutlined />}
+                                    onClick={handleGoogleSignIn}
                                     style={{
                                         height: 46,
                                         borderRadius: 14,
@@ -249,7 +270,9 @@ const Login = () => {
                                             <Checkbox>Remember me</Checkbox>
                                         </Form.Item>
 
-                                        <Link style={{ color: '#5D79BB' }}>Forgot password?</Link>
+                                        <Link style={{ color: '#5D79BB' }} onClick={() => navigate('/forgot-password')}>
+                                            Forgot password?
+                                        </Link>
                                     </div>
 
                                     <Form.Item style={{ marginBottom: 16 }}>
