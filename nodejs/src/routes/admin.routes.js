@@ -1,7 +1,17 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { pool } = require('../db/pool');
-const { findByEmail, createUser, toPublicUser } = require('../models/userModel');
+const {
+    findByEmail,
+    findById,
+    createUser,
+    toPublicUser,
+    listUsers,
+    updateUserAdmin,
+    countActiveSuperAdmins,
+    VALID_ROLES,
+    VALID_STATUSES,
+} = require('../models/userModel');
 const { attachUser, requireAuth, requireRole } = require('../middleware/auth');
 const { logAudit, clientIp } = require('../utils/audit');
 const { isValidEmail, isValidPassword, MIN_PASSWORD_LENGTH } = require('../utils/validators');
@@ -97,6 +107,68 @@ router.post('/users', async (req, res) => {
     });
 
     res.status(201).json({ ok: true, user: publicUser });
+});
+
+// ---------- Role management ----------
+
+router.get('/users', async (req, res) => {
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize, 10) || 20));
+
+    const result = await listUsers({
+        search: req.query.search,
+        role: req.query.role,
+        status: req.query.status,
+        page,
+        pageSize,
+    });
+
+    res.json({ ok: true, ...result });
+});
+
+router.patch('/users/:id', async (req, res) => {
+    const targetId = Number(req.params.id);
+    if (!Number.isInteger(targetId)) {
+        return res.status(400).json({ ok: false, error: 'Invalid user id' });
+    }
+
+    const { role, isRenter, isLender, status } = req.body || {};
+    if (role !== undefined && !VALID_ROLES.includes(role)) {
+        return res.status(400).json({ ok: false, error: `role must be one of: ${VALID_ROLES.join(', ')}` });
+    }
+    if (status !== undefined && !VALID_STATUSES.includes(status)) {
+        return res.status(400).json({ ok: false, error: `status must be one of: ${VALID_STATUSES.join(', ')}` });
+    }
+
+    const target = await findById(targetId);
+    if (!target) return res.status(404).json({ ok: false, error: 'User not found' });
+
+    // Guard against locking the platform out of Super Admin entirely: block demoting
+    // or suspending/deactivating the *last* active super_admin (yourself included).
+    const demotingRole = role !== undefined && role !== 'super_admin';
+    const deactivating = status !== undefined && status !== 'active';
+    if (target.role === 'super_admin' && (demotingRole || deactivating)) {
+        const remaining = await countActiveSuperAdmins(target.id);
+        if (remaining === 0) {
+            return res.status(409).json({
+                ok: false,
+                error: 'Cannot remove the last active Super Admin. Promote another account first.',
+            });
+        }
+    }
+
+    const updated = await updateUserAdmin(targetId, { role, isRenter, isLender, status });
+
+    await logAudit({
+        userId: req.user.id,
+        action: 'admin.user_updated',
+        entityType: 'user',
+        entityId: targetId,
+        metadata: { changes: { role, isRenter, isLender, status }, targetEmail: target.email },
+        ip: clientIp(req),
+    });
+
+    res.json({ ok: true, user: updated });
 });
 
 module.exports = router;

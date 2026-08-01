@@ -118,3 +118,18 @@ CREATE INDEX IF NOT EXISTS idx_password_reset_user ON password_reset_tokens(user
 ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_provider TEXT NOT NULL DEFAULT 'password'
     CHECK (auth_provider IN ('password', 'google'));
 ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id TEXT UNIQUE;
+
+-- Every 500 the API returns lands here (see middleware/errorHandler.js), so Super
+-- Admin/Support have something concrete to triage instead of just server logs.
+CREATE TABLE IF NOT EXISTS error_log (
+    id             BIGSERIAL PRIMARY KEY,
+    message        TEXT NOT NULL,
+    stack          TEXT,
+    method         TEXT,
+    route          TEXT,
+    status_code    INTEGER,
+    user_id        BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    metadata       JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_error_log_created ON error_log(created_at);

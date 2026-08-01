@@ -49,4 +49,51 @@ async function listDocumentsForBooking(bookingId) {
     return rows.map(toPublicDocument);
 }
 
-module.exports = { createDocument, listDocumentsForBooking, toPublicDocument };
+// Powers the Super Admin "look up any document by reference number" screen. Pulls in
+// the booking, item, and renter so the result is self-contained — no follow-up calls.
+async function findByDocumentNumberWithContext(documentNumber) {
+    const { rows } = await pool.query(
+        `SELECT
+            d.*,
+            b.id AS booking_id_full, b.start_date, b.end_date, b.status AS booking_status,
+            b.total_amount AS booking_total_amount,
+            i.id AS item_id, i.title AS item_title,
+            renter.id AS renter_id, renter.first_name AS renter_first_name,
+            renter.last_name AS renter_last_name, renter.email AS renter_email,
+            owner.id AS owner_id, owner.first_name AS owner_first_name,
+            owner.last_name AS owner_last_name, owner.email AS owner_email
+         FROM documents d
+         JOIN bookings b ON b.id = d.booking_id
+         JOIN items i ON i.id = b.item_id
+         JOIN users renter ON renter.id = b.renter_id
+         JOIN users owner ON owner.id = i.owner_id
+         WHERE UPPER(d.document_number) = UPPER($1)`,
+        [documentNumber]
+    );
+    const row = rows[0];
+    if (!row) return null;
+
+    return {
+        ...toPublicDocument(row),
+        booking: {
+            id: row.booking_id_full,
+            startDate: row.start_date,
+            endDate: row.end_date,
+            status: row.booking_status,
+            totalAmount: Number(row.booking_total_amount),
+        },
+        item: { id: row.item_id, title: row.item_title },
+        renter: {
+            id: row.renter_id,
+            name: `${row.renter_first_name} ${row.renter_last_name}`,
+            email: row.renter_email,
+        },
+        owner: {
+            id: row.owner_id,
+            name: `${row.owner_first_name} ${row.owner_last_name}`,
+            email: row.owner_email,
+        },
+    };
+}
+
+module.exports = { createDocument, listDocumentsForBooking, findByDocumentNumberWithContext, toPublicDocument };
