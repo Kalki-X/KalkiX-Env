@@ -1,8 +1,14 @@
 import React from "react";
-import { Outlet, useNavigate } from "react-router-dom";
-import { Layout, Space, Tag, Typography, Button, Avatar } from "antd";
+import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
+import { Layout, Space, Tag, Typography, Button, Avatar, Menu } from "antd";
 import { LogoutOutlined, ShopOutlined, UserOutlined } from "@ant-design/icons";
 import { useAuth } from "../features/auth/context/AuthContext";
+
+export interface DashboardNavItem {
+    key: string;
+    label: string;
+    path: string;
+}
 
 const { Header, Content } = Layout;
 const { Text, Title } = Typography;
@@ -25,12 +31,13 @@ const ROLE_COLOR: Record<string, string> = {
 
 /**
  * Shared shell for every role dashboard (/admin, /staff, /finance, /lender, /renter).
- * Just a header (identity + logout) + content outlet for now — a Sider with
- * section nav gets added once there's more than one page per role to switch between.
+ * Header (identity + logout) + an optional section nav (once a role has more than
+ * one page, e.g. Super Admin's Users/Documents/Audit/Reports/Payments/Errors) + outlet.
  */
-export default function DashboardLayout({ title }: { title: string }) {
+export default function DashboardLayout({ title, navItems }: { title: string; navItems?: DashboardNavItem[] }) {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const handleLogout = async () => {
         await logout();
@@ -95,6 +102,20 @@ export default function DashboardLayout({ title }: { title: string }) {
                     </Button>
                 </Space>
             </Header>
+
+            {navItems && navItems.length > 0 && (
+                <Menu
+                    mode="horizontal"
+                    selectedKeys={[
+                        navItems.find((item) => item.path === location.pathname)?.key ?? navItems[0].key,
+                    ]}
+                    style={{ borderBottom: "1px solid #d9e1f2", paddingLeft: 24 }}
+                    items={navItems.map((item) => ({
+                        key: item.key,
+                        label: <Link to={item.path}>{item.label}</Link>,
+                    }))}
+                />
+            )}
 
             <Content style={{ padding: 32 }}>
                 <div style={{ maxWidth: 1200, margin: "0 auto" }}>

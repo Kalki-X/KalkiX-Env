@@ -6,12 +6,28 @@ import ForgotPassword from "../pages/ForgotPassword";
 import ResetPassword from "../pages/ResetPassword";
 import GoogleAuthComplete from "../pages/GoogleAuthComplete";
 import ProtectedRoute from "./ProtectedRoute";
-import DashboardLayout from "../layouts/DashboardLayout";
+import DashboardLayout, { DashboardNavItem } from "../layouts/DashboardLayout";
 import SuperAdminDashboard from "../pages/admin/SuperAdminDashboard";
+import UserManagement from "../pages/admin/UserManagement";
+import DocumentLookup from "../pages/admin/DocumentLookup";
+import AuditTrail from "../pages/admin/AuditTrail";
+import SalesReports from "../pages/admin/SalesReports";
+import PaymentManagement from "../pages/admin/PaymentManagement";
+import ErrorReports from "../pages/admin/ErrorReports";
 import StaffDashboard from "../pages/staff/StaffDashboard";
 import FinanceDashboard from "../pages/finance/FinanceDashboard";
 import LenderDashboard from "../pages/lender/LenderDashboard";
 import RenterDashboard from "../pages/renter/RenterDashboard";
+
+const ADMIN_NAV_ITEMS: DashboardNavItem[] = [
+    { key: "overview", label: "Overview", path: "/admin" },
+    { key: "users", label: "Users & Roles", path: "/admin/users" },
+    { key: "documents", label: "Documents", path: "/admin/documents" },
+    { key: "audit", label: "Audit Trail", path: "/admin/audit" },
+    { key: "reports", label: "Sales Reports", path: "/admin/reports" },
+    { key: "payments", label: "Payments", path: "/admin/payments" },
+    { key: "errors", label: "Error Reports", path: "/admin/errors" },
+];
 
 export const router = createBrowserRouter([
     {
@@ -50,8 +66,16 @@ export const router = createBrowserRouter([
         element: <ProtectedRoute roles={["super_admin"]} />,
         children: [
             {
-                element: <DashboardLayout title="Super Admin" />,
-                children: [{ index: true, element: <SuperAdminDashboard /> }],
+                element: <DashboardLayout title="Super Admin" navItems={ADMIN_NAV_ITEMS} />,
+                children: [
+                    { index: true, element: <SuperAdminDashboard /> },
+                    { path: "users", element: <UserManagement /> },
+                    { path: "documents", element: <DocumentLookup /> },
+                    { path: "audit", element: <AuditTrail /> },
+                    { path: "reports", element: <SalesReports /> },
+                    { path: "payments", element: <PaymentManagement /> },
+                    { path: "errors", element: <ErrorReports /> },
+                ],
             },
         ],
     },

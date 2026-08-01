@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
     Row,
     Col,
@@ -41,14 +42,13 @@ interface StaffFormValues {
     isLender?: boolean;
 }
 
-/** Sections promised for Phase 2 but not built yet — shown so nothing feels silently missing. */
-const UPCOMING_SECTIONS = [
-    { icon: <IdcardOutlined />, title: "Role management", desc: "Edit permissions per role, suspend/reactivate accounts." },
-    { icon: <BarChartOutlined />, title: "Sales reports", desc: "Platform-wide booking volume and revenue over time." },
-    { icon: <DollarOutlined />, title: "Payment management", desc: "Review payments, refunds, and payout status." },
-    { icon: <FileSearchOutlined />, title: "Document lookup", desc: "Find any proforma invoice, invoice, or credit note by reference number." },
-    { icon: <AuditOutlined />, title: "Audit trail", desc: "Search the full audit_log — logins, payments, document generation." },
-    { icon: <BugOutlined />, title: "System error reports", desc: "Surfaced backend errors for triage." },
+const QUICK_LINKS = [
+    { icon: <IdcardOutlined />, title: "Role management", desc: "Edit permissions per role, suspend/reactivate accounts.", path: "/admin/users" },
+    { icon: <BarChartOutlined />, title: "Sales reports", desc: "Platform-wide booking volume and revenue over time.", path: "/admin/reports" },
+    { icon: <DollarOutlined />, title: "Payment management", desc: "Review payments, refunds, and payout status.", path: "/admin/payments" },
+    { icon: <FileSearchOutlined />, title: "Document lookup", desc: "Find any proforma invoice, invoice, or credit note by reference number.", path: "/admin/documents" },
+    { icon: <AuditOutlined />, title: "Audit trail", desc: "Search the full audit_log — logins, payments, document generation.", path: "/admin/audit" },
+    { icon: <BugOutlined />, title: "System error reports", desc: "Surfaced backend errors for triage.", path: "/admin/errors" },
 ];
 
 export default function SuperAdminDashboard() {
@@ -235,22 +235,24 @@ export default function SuperAdminDashboard() {
 
             <div>
                 <Title level={4} style={{ color: "#2B2E4A" }}>
-                    Coming up next
+                    Manage
                 </Title>
                 <Row gutter={[16, 16]}>
-                    {UPCOMING_SECTIONS.map((s) => (
+                    {QUICK_LINKS.map((s) => (
                         <Col xs={24} sm={12} md={8} key={s.title}>
-                            <Card size="small" style={{ opacity: 0.7 }}>
-                                <Space direction="vertical" size={4}>
-                                    <Space>
-                                        {s.icon}
-                                        <strong>{s.title}</strong>
+                            <Link to={s.path}>
+                                <Card size="small" hoverable>
+                                    <Space direction="vertical" size={4}>
+                                        <Space>
+                                            {s.icon}
+                                            <strong>{s.title}</strong>
+                                        </Space>
+                                        <Paragraph style={{ color: "#64748b", marginBottom: 0, fontSize: 13 }}>
+                                            {s.desc}
+                                        </Paragraph>
                                     </Space>
-                                    <Paragraph style={{ color: "#64748b", marginBottom: 0, fontSize: 13 }}>
-                                        {s.desc}
-                                    </Paragraph>
-                                </Space>
-                            </Card>
+                                </Card>
+                            </Link>
                         </Col>
                     ))}
                 </Row>
