@@ -4,18 +4,35 @@ const { findById } = require('../models/userModel');
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-only-secret-change-me';
 const COOKIE_NAME = 'gs_token';
 
-function signToken(user) {
+// Not remembered: short-lived, and a browser-session cookie (cleared on browser close).
+// Remembered ("Remember me" checked): longer-lived, persisted cookie with a matching maxAge.
+const DEFAULT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1d';
+const REMEMBER_EXPIRES_IN = process.env.JWT_REMEMBER_EXPIRES_IN || '30d';
+
+// Tiny duration parser so we don't need an extra dependency just to turn "30d" into
+// milliseconds for the cookie's maxAge (jsonwebtoken parses the same strings itself
+// for `expiresIn`, so this only ever needs to agree with our own env var values).
+function durationToMs(duration) {
+    const match = /^(\d+)\s*(d|h|m|s)$/i.exec(String(duration).trim());
+    if (!match) return 24 * 60 * 60 * 1000; // fallback: 1 day
+    const value = Number(match[1]);
+    const unitMs = { s: 1000, m: 60 * 1000, h: 60 * 60 * 1000, d: 24 * 60 * 60 * 1000 }[match[2].toLowerCase()];
+    return value * unitMs;
+}
+
+function signToken(user, { rememberMe = false } = {}) {
     return jwt.sign({ sub: user.id, role: user.role }, JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+        expiresIn: rememberMe ? REMEMBER_EXPIRES_IN : DEFAULT_EXPIRES_IN,
     });
 }
 
-function setAuthCookie(res, token) {
+function setAuthCookie(res, token, { rememberMe = false } = {}) {
     res.cookie(COOKIE_NAME, token, {
         httpOnly: true,
         secure: process.env.COOKIE_SECURE === 'true',
         sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
+        // Omitting maxAge makes it a session cookie, cleared when the browser closes.
+        ...(rememberMe ? { maxAge: durationToMs(REMEMBER_EXPIRES_IN) } : {}),
     });
 }
 

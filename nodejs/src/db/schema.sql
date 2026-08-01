@@ -99,3 +99,22 @@ CREATE TABLE IF NOT EXISTS audit_log (
 CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_log(user_id);
 CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_log(action);
 CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_log(created_at);
+
+-- Forgot-password flow. Only the SHA-256 hash of the token is ever stored — the raw
+-- token exists only in the emailed link, exactly like a password. Each row is single-use.
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    id             BIGSERIAL PRIMARY KEY,
+    user_id        BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash     TEXT NOT NULL UNIQUE,
+    expires_at     TIMESTAMPTZ NOT NULL,
+    used_at        TIMESTAMPTZ,
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_password_reset_user ON password_reset_tokens(user_id);
+
+-- Google Sign-In. `auth_provider` is informational (which method created the
+-- account); a user can still have a usable local password alongside google_id if
+-- they registered normally and later linked Google to the same email.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_provider TEXT NOT NULL DEFAULT 'password'
+    CHECK (auth_provider IN ('password', 'google'));
+ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id TEXT UNIQUE;

@@ -3,6 +3,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 
 const authRoutes = require('./routes/auth.routes');
+const googleAuthRoutes = require('./routes/googleAuth.routes');
 const listingsRoutes = require('./routes/listings.routes');
 const bookingsRoutes = require('./routes/bookings.routes');
 const adminRoutes = require('./routes/admin.routes');
@@ -24,6 +25,7 @@ function createApp() {
     app.get('/api/ping', (_req, res) => res.json({ ok: true, time: new Date().toISOString() }));
 
     app.use('/api/auth', authRoutes);
+    app.use('/api/auth', googleAuthRoutes);
     app.use('/api/items', listingsRoutes);
     app.use('/api/bookings', bookingsRoutes);
     app.use('/api/admin', adminRoutes);
