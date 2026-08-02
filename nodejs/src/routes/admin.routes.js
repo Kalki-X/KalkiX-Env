@@ -158,15 +158,53 @@ router.patch('/users/:id', async (req, res) => {
     }
 
     const updated = await updateUserAdmin(targetId, { role, isRenter, isLender, status });
+    const ip = clientIp(req);
 
-    await logAudit({
-        userId: req.user.id,
-        action: 'admin.user_updated',
-        entityType: 'user',
-        entityId: targetId,
-        metadata: { changes: { role, isRenter, isLender, status }, targetEmail: target.email },
-        ip: clientIp(req),
-    });
+    // One specific, filterable entry per thing that actually changed (compared against
+    // `target`, the pre-update row) rather than a single generic "updated" blob — the
+    // Audit Trail's action filter and downstream reporting both key off these names, so
+    // "suspend a user" needs to show up as exactly that, not buried in a diff object.
+    const STATUS_ACTION = {
+        suspended: 'admin.user_suspended',
+        deactivated: 'admin.user_deactivated',
+        active: 'admin.user_reactivated',
+    };
+    if (status !== undefined && status !== target.status) {
+        await logAudit({
+            userId: req.user.id,
+            action: STATUS_ACTION[status],
+            entityType: 'user',
+            entityId: targetId,
+            metadata: { targetEmail: target.email, from: target.status, to: status },
+            ip,
+        });
+    }
+    if (role !== undefined && role !== target.role) {
+        await logAudit({
+            userId: req.user.id,
+            action: 'admin.user_role_changed',
+            entityType: 'user',
+            entityId: targetId,
+            metadata: { targetEmail: target.email, from: target.role, to: role },
+            ip,
+        });
+    }
+    const isRenterChanged = isRenter !== undefined && isRenter !== target.isRenter;
+    const isLenderChanged = isLender !== undefined && isLender !== target.isLender;
+    if (isRenterChanged || isLenderChanged) {
+        await logAudit({
+            userId: req.user.id,
+            action: 'admin.user_capabilities_changed',
+            entityType: 'user',
+            entityId: targetId,
+            metadata: {
+                targetEmail: target.email,
+                isRenter: isRenter ?? target.isRenter,
+                isLender: isLender ?? target.isLender,
+            },
+            ip,
+        });
+    }
 
     res.json({ ok: true, user: updated });
 });
