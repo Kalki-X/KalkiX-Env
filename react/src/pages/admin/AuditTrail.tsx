@@ -91,6 +91,7 @@ export default function AuditTrail() {
                 rowKey="id"
                 loading={loading}
                 dataSource={entries}
+                scroll={{ x: 'max-content' }}
                 pagination={{
                     current: page,
                     pageSize,

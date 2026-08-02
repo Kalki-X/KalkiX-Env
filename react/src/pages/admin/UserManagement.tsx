@@ -164,6 +164,7 @@ export default function UserManagement() {
                 rowKey="id"
                 loading={loading}
                 dataSource={users}
+                scroll={{ x: 'max-content' }}
                 pagination={{
                     current: page,
                     pageSize,

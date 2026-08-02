@@ -95,6 +95,7 @@ export default function SalesReports() {
                         loading={loading}
                         dataSource={report.series}
                         pagination={false}
+                        scroll={{ x: 'max-content' }}
                         columns={[
                             {
                                 title: 'Period',

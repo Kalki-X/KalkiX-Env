@@ -89,6 +89,7 @@ export default function PaymentManagement() {
                 rowKey="id"
                 loading={loading}
                 dataSource={payments}
+                scroll={{ x: 'max-content' }}
                 pagination={{
                     current: page,
                     pageSize,

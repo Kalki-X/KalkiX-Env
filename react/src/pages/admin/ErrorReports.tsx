@@ -43,6 +43,7 @@ export default function ErrorReports() {
                 rowKey="id"
                 loading={loading}
                 dataSource={errors}
+                scroll={{ x: 'max-content' }}
                 locale={{ emptyText: <Empty description="No errors recorded — good sign." /> }}
                 pagination={{
                     current: page,
