@@ -3,6 +3,10 @@ import { Typography, DatePicker, Select, Row, Col, Card, Statistic, Table, Alert
 import dayjs, { Dayjs } from 'dayjs';
 import { getSalesReport, SalesReport } from '../../features/admin/api/adminApi';
 import { getApiErrorMessage } from '../../services/api/client';
+import ExportButton from '../../components/ExportButton/ExportButton';
+import { ExportColumn } from '../../utils/exportTable';
+
+type SalesReportRow = SalesReport['series'][number];
 
 const { Title, Paragraph } = Typography;
 const { RangePicker } = DatePicker;
@@ -38,6 +42,24 @@ export default function SalesReports() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [dateRange, groupBy]);
 
+    // Re-fetches with the export flag set (so the backend audit-logs the export) and
+    // returns the series rows for the currently selected date range/grouping.
+    const fetchAllForExport = async () => {
+        const result = await getSalesReport({
+            from: dateRange?.[0]?.startOf('day').toISOString(),
+            to: dateRange?.[1]?.endOf('day').toISOString(),
+            groupBy,
+            export: true,
+        });
+        return result.series;
+    };
+
+    const exportColumns: ExportColumn<SalesReportRow>[] = [
+        { header: 'Period', accessor: (r) => dayjs(r.period).format(groupBy === 'month' ? 'MMM YYYY' : 'DD MMM YYYY') },
+        { header: 'Bookings', accessor: (r) => r.bookings },
+        { header: 'Revenue', accessor: (r) => `$${r.revenue.toFixed(2)}` },
+    ];
+
     return (
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
             <div>
@@ -56,6 +78,13 @@ export default function SalesReports() {
                     <Option value="week">By week</Option>
                     <Option value="month">By month</Option>
                 </Select>
+                <ExportButton
+                    fetchAll={fetchAllForExport}
+                    columns={exportColumns}
+                    baseName="gearshare-sales-report"
+                    title="GearShare — Sales Report"
+                    disabled={!report}
+                />
             </Space>
 
             {errorMessage && <Alert type="error" showIcon message={errorMessage} />}

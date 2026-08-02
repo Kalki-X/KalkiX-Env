@@ -22,6 +22,9 @@ import {
     UpdateUserPayload,
 } from '../../features/admin/api/adminApi';
 import { getApiErrorMessage } from '../../services/api/client';
+import ExportButton from '../../components/ExportButton/ExportButton';
+import { ExportColumn } from '../../utils/exportTable';
+import dayjs from 'dayjs';
 
 const { Title, Paragraph } = Typography;
 const { Option } = Select;
@@ -79,6 +82,23 @@ export default function UserManagement() {
         setPage(1);
         load();
     };
+
+    // Fetches every user matching the current search/role/status filters (not just
+    // the current page) so exports reflect the full filtered result set.
+    const fetchAllForExport = async () => {
+        const result = await listUsers({ search: search || undefined, role, status, page: 1, pageSize: 5000, export: true });
+        return result.users;
+    };
+
+    const exportColumns: ExportColumn<PlatformUser>[] = [
+        { header: 'Name', accessor: (u) => `${u.firstName} ${u.lastName}` },
+        { header: 'Email', accessor: (u) => u.email },
+        { header: 'Role', accessor: (u) => u.role },
+        { header: 'Renter', accessor: (u) => (u.isRenter ? 'Yes' : 'No') },
+        { header: 'Lender', accessor: (u) => (u.isLender ? 'Yes' : 'No') },
+        { header: 'Status', accessor: (u) => u.status },
+        { header: 'Created', accessor: (u) => dayjs(u.createdAt).format('DD MMM YYYY') },
+    ];
 
     const openEdit = (user: PlatformUser) => {
         setEditingUser(user);
@@ -156,6 +176,12 @@ export default function UserManagement() {
                     <Option value="suspended">Suspended</Option>
                     <Option value="deactivated">Deactivated</Option>
                 </Select>
+                <ExportButton
+                    fetchAll={fetchAllForExport}
+                    columns={exportColumns}
+                    baseName="gearshare-users"
+                    title="GearShare — Platform Users"
+                />
             </Space>
 
             {errorMessage && <Alert type="error" showIcon message={errorMessage} />}

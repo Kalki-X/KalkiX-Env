@@ -67,6 +67,7 @@ export interface ListUsersParams {
     status?: UserStatus;
     page?: number;
     pageSize?: number;
+    export?: boolean;
 }
 
 export async function listUsers(params: ListUsersParams): Promise<Paginated<PlatformUser> & { users: PlatformUser[] }> {
@@ -129,6 +130,7 @@ export interface ListAuditParams {
     to?: string;
     page?: number;
     pageSize?: number;
+    export?: boolean;
 }
 
 export async function listAuditLog(params: ListAuditParams): Promise<Paginated<AuditEntry> & { entries: AuditEntry[] }> {
@@ -144,7 +146,7 @@ export interface SalesReport {
     totals: { bookings: number; revenue: number; averageBookingValue: number };
 }
 
-export async function getSalesReport(params: { from?: string; to?: string; groupBy?: string }): Promise<SalesReport> {
+export async function getSalesReport(params: { from?: string; to?: string; groupBy?: string; export?: boolean }): Promise<SalesReport> {
     const { data } = await apiClient.get("/api/admin/reports/sales", { params });
     return data.report as SalesReport;
 }
@@ -170,6 +172,7 @@ export async function listPayments(params: {
     to?: string;
     page?: number;
     pageSize?: number;
+    export?: boolean;
 }): Promise<Paginated<PaymentRecord> & { payments: PaymentRecord[] }> {
     const { data } = await apiClient.get("/api/admin/payments", { params });
     return data;
@@ -194,7 +197,7 @@ export interface SystemError {
     createdAt: string;
 }
 
-export async function listSystemErrors(params: { page?: number; pageSize?: number }): Promise<Paginated<SystemError> & { errors: SystemError[] }> {
+export async function listSystemErrors(params: { page?: number; pageSize?: number; export?: boolean }): Promise<Paginated<SystemError> & { errors: SystemError[] }> {
     const { data } = await apiClient.get("/api/admin/errors", { params });
     return data;
 }

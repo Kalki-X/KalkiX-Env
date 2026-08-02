@@ -3,6 +3,8 @@ import { Typography, Table, Tag, Alert, Space, Empty } from 'antd';
 import dayjs from 'dayjs';
 import { listSystemErrors, SystemError } from '../../features/admin/api/adminApi';
 import { getApiErrorMessage } from '../../services/api/client';
+import ExportButton from '../../components/ExportButton/ExportButton';
+import { ExportColumn } from '../../utils/exportTable';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -26,6 +28,22 @@ export default function ErrorReports() {
             .finally(() => setLoading(false));
     }, [page, pageSize]);
 
+    // No filters on this page (yet) — export just pulls every recorded error, capped
+    // at 5000 to keep the request reasonable.
+    const fetchAllForExport = async () => {
+        const result = await listSystemErrors({ page: 1, pageSize: 5000, export: true });
+        return result.errors;
+    };
+
+    const exportColumns: ExportColumn<SystemError>[] = [
+        { header: 'Time', accessor: (e) => dayjs(e.createdAt).format('DD MMM YYYY, HH:mm:ss') },
+        { header: 'Method', accessor: (e) => e.method || '' },
+        { header: 'Route', accessor: (e) => e.route || '' },
+        { header: 'Message', accessor: (e) => e.message },
+        { header: 'Status', accessor: (e) => e.statusCode ?? '' },
+        { header: 'User', accessor: (e) => (e.userId ? `#${e.userId}` : '') },
+    ];
+
     return (
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
             <div>
@@ -36,6 +54,13 @@ export default function ErrorReports() {
                     Every unhandled 500 the API has returned, for triage.
                 </Paragraph>
             </div>
+
+            <ExportButton
+                fetchAll={fetchAllForExport}
+                columns={exportColumns}
+                baseName="gearshare-error-reports"
+                title="GearShare — System Error Reports"
+            />
 
             {errorMessage && <Alert type="error" showIcon message={errorMessage} />}
 

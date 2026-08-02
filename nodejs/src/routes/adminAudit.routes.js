@@ -1,6 +1,7 @@
 const express = require('express');
 const { attachUser, requireAuth, requireRole } = require('../middleware/auth');
 const { listAuditLog } = require('../models/auditModel');
+const { logAudit, clientIp } = require('../utils/audit');
 
 const router = express.Router();
 
@@ -10,7 +11,8 @@ router.use(attachUser, requireAuth, requireRole('super_admin'));
 
 router.get('/', async (req, res) => {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-    const pageSize = Math.min(200, Math.max(1, parseInt(req.query.pageSize, 10) || 50));
+    const isExport = req.query.export === '1' || req.query.export === 'true';
+    const pageSize = Math.min(isExport ? 5000 : 200, Math.max(1, parseInt(req.query.pageSize, 10) || 50));
 
     const result = await listAuditLog({
         userId: req.query.userId ? Number(req.query.userId) : undefined,
@@ -21,6 +23,15 @@ router.get('/', async (req, res) => {
         page,
         pageSize,
     });
+
+    if (isExport) {
+        await logAudit({
+            userId: req.user.id,
+            action: 'admin.audit_log_exported',
+            metadata: { action: req.query.action || null, entityType: req.query.entityType || null, from: req.query.from || null, to: req.query.to || null, count: result.entries.length },
+            ip: clientIp(req),
+        });
+    }
 
     res.json({ ok: true, ...result });
 });

@@ -3,6 +3,8 @@ import { Typography, Select, Table, Tag, Button, Alert, Space, Popconfirm, messa
 import dayjs from 'dayjs';
 import { listPayments, refundPayment, PaymentRecord } from '../../features/admin/api/adminApi';
 import { getApiErrorMessage } from '../../services/api/client';
+import ExportButton from '../../components/ExportButton/ExportButton';
+import { ExportColumn } from '../../utils/exportTable';
 
 const { Title, Paragraph } = Typography;
 const { Option } = Select;
@@ -43,6 +45,22 @@ export default function PaymentManagement() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [page, pageSize, status]);
 
+    // Fetches every payment matching the current status/date filters (not just the
+    // current page) so exports reflect the full filtered result set.
+    const fetchAllForExport = async () => {
+        const result = await listPayments({ status, page: 1, pageSize: 5000, export: true });
+        return result.payments;
+    };
+
+    const exportColumns: ExportColumn<PaymentRecord>[] = [
+        { header: 'Date', accessor: (p) => dayjs(p.createdAt).format('DD MMM YYYY, HH:mm') },
+        { header: 'Item', accessor: (p) => p.item?.title ?? '' },
+        { header: 'Renter', accessor: (p) => (p.renter ? `${p.renter.name} (${p.renter.email})` : '') },
+        { header: 'Amount', accessor: (p) => `${p.currency} ${p.amount.toFixed(2)}` },
+        { header: 'Method', accessor: (p) => p.method || '' },
+        { header: 'Status', accessor: (p) => p.status },
+    ];
+
     const onRefund = async (id: number) => {
         setRefundingId(id);
         try {
@@ -67,21 +85,29 @@ export default function PaymentManagement() {
                 </Paragraph>
             </div>
 
-            <Select
-                allowClear
-                placeholder="Status"
-                style={{ width: 180 }}
-                value={status}
-                onChange={(v) => {
-                    setPage(1);
-                    setStatus(v);
-                }}
-            >
-                <Option value="pending">Pending</Option>
-                <Option value="succeeded">Succeeded</Option>
-                <Option value="failed">Failed</Option>
-                <Option value="refunded">Refunded</Option>
-            </Select>
+            <Space wrap>
+                <Select
+                    allowClear
+                    placeholder="Status"
+                    style={{ width: 180 }}
+                    value={status}
+                    onChange={(v) => {
+                        setPage(1);
+                        setStatus(v);
+                    }}
+                >
+                    <Option value="pending">Pending</Option>
+                    <Option value="succeeded">Succeeded</Option>
+                    <Option value="failed">Failed</Option>
+                    <Option value="refunded">Refunded</Option>
+                </Select>
+                <ExportButton
+                    fetchAll={fetchAllForExport}
+                    columns={exportColumns}
+                    baseName="gearshare-payments"
+                    title="GearShare — Payments"
+                />
+            </Space>
 
             {errorMessage && <Alert type="error" showIcon message={errorMessage} />}
 

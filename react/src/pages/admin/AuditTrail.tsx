@@ -3,6 +3,8 @@ import { Typography, Input, DatePicker, Table, Tag, Alert, Space, Tooltip } from
 import dayjs, { Dayjs } from 'dayjs';
 import { listAuditLog, AuditEntry } from '../../features/admin/api/adminApi';
 import { getApiErrorMessage } from '../../services/api/client';
+import ExportButton from '../../components/ExportButton/ExportButton';
+import { ExportColumn } from '../../utils/exportTable';
 
 const { Title, Paragraph, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -44,6 +46,30 @@ export default function AuditTrail() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [page, pageSize, dateRange]);
 
+    // Fetches every entry matching the current action/entity/date filters (not just
+    // the current page) so exports reflect the full filtered result set.
+    const fetchAllForExport = async () => {
+        const result = await listAuditLog({
+            action: action || undefined,
+            entityType: entityType || undefined,
+            from: dateRange?.[0]?.startOf('day').toISOString(),
+            to: dateRange?.[1]?.endOf('day').toISOString(),
+            page: 1,
+            pageSize: 5000,
+            export: true,
+        });
+        return result.entries;
+    };
+
+    const exportColumns: ExportColumn<AuditEntry>[] = [
+        { header: 'Time', accessor: (e) => dayjs(e.createdAt).format('DD MMM YYYY, HH:mm:ss') },
+        { header: 'User', accessor: (e) => (e.user ? `${e.user.name} (${e.user.email})` : '') },
+        { header: 'Action', accessor: (e) => e.action },
+        { header: 'Entity', accessor: (e) => (e.entityType ? `${e.entityType} #${e.entityId}` : '') },
+        { header: 'Details', accessor: (e) => (Object.keys(e.metadata || {}).length ? JSON.stringify(e.metadata) : '') },
+        { header: 'IP', accessor: (e) => e.ipAddress || '' },
+    ];
+
     return (
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
             <div>
@@ -82,6 +108,12 @@ export default function AuditTrail() {
                         setPage(1);
                         setDateRange(v as [Dayjs, Dayjs] | null);
                     }}
+                />
+                <ExportButton
+                    fetchAll={fetchAllForExport}
+                    columns={exportColumns}
+                    baseName="gearshare-audit-trail"
+                    title="GearShare — Audit Trail"
                 />
             </Space>
 

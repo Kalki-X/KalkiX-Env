@@ -10,7 +10,8 @@ router.use(attachUser, requireAuth, requireRole('super_admin', 'finance'));
 
 router.get('/', async (req, res) => {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-    const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize, 10) || 20));
+    const isExport = req.query.export === '1' || req.query.export === 'true';
+    const pageSize = Math.min(isExport ? 5000 : 100, Math.max(1, parseInt(req.query.pageSize, 10) || 20));
 
     const result = await listPayments({
         status: req.query.status,
@@ -19,6 +20,15 @@ router.get('/', async (req, res) => {
         page,
         pageSize,
     });
+
+    if (isExport) {
+        await logAudit({
+            userId: req.user.id,
+            action: 'admin.payments_exported',
+            metadata: { status: req.query.status || null, from: req.query.from || null, to: req.query.to || null, count: result.payments.length },
+            ip: clientIp(req),
+        });
+    }
 
     res.json({ ok: true, ...result });
 });

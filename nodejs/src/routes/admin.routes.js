@@ -113,7 +113,12 @@ router.post('/users', async (req, res) => {
 
 router.get('/users', async (req, res) => {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-    const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize, 10) || 20));
+    // Normal pagination caps at 100/page; the "export" flag (set by the frontend's
+    // export-to-CSV/Excel/PDF buttons) needs the full filtered result set in one
+    // shot, so it gets a much higher cap instead of a separate endpoint.
+    const isExport = req.query.export === '1' || req.query.export === 'true';
+    const maxPageSize = isExport ? 5000 : 100;
+    const pageSize = Math.min(maxPageSize, Math.max(1, parseInt(req.query.pageSize, 10) || 20));
 
     const result = await listUsers({
         search: req.query.search,
@@ -122,6 +127,17 @@ router.get('/users', async (req, res) => {
         page,
         pageSize,
     });
+
+    if (isExport) {
+        await logAudit({
+            userId: req.user.id,
+            action: 'admin.users_exported',
+            entityType: 'user',
+            entityId: null,
+            metadata: { search: req.query.search || null, role: req.query.role || null, status: req.query.status || null, count: result.users.length },
+            ip: clientIp(req),
+        });
+    }
 
     res.json({ ok: true, ...result });
 });
