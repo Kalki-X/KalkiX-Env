@@ -16,6 +16,7 @@ const adminAuditRoutes = require('./routes/adminAudit.routes');
 const adminReportsRoutes = require('./routes/adminReports.routes');
 const adminPaymentsRoutes = require('./routes/adminPayments.routes');
 const adminErrorsRoutes = require('./routes/adminErrors.routes');
+const staffUsersRoutes = require('./routes/staffUsers.routes');
 const { errorHandler } = require('./middleware/errorHandler');
 
 const REACT_URL = process.env.REACT_URL || 'http://localhost:5173';
@@ -49,6 +50,10 @@ function createApp() {
     app.use('/api/admin/payments', adminPaymentsRoutes);
     app.use('/api/admin/errors', adminErrorsRoutes);
     app.use('/api/admin', adminRoutes);
+    // Admin & Support's user-management view — deliberately a separate /api/staff
+    // prefix (not /api/admin/*) so it's structurally impossible for it to collide
+    // with admin.routes.js's blanket requireRole('super_admin').
+    app.use('/api/staff/users', staffUsersRoutes);
 
     // Centralized error handler — keeps unexpected DB/JS errors from leaking stack
     // traces and records them to error_log for the Super Admin error report.

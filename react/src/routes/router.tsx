@@ -15,9 +15,17 @@ import SalesReports from "../pages/admin/SalesReports";
 import PaymentManagement from "../pages/admin/PaymentManagement";
 import ErrorReports from "../pages/admin/ErrorReports";
 import StaffDashboard from "../pages/staff/StaffDashboard";
+import StaffUserManagement from "../pages/staff/UserManagement";
 import FinanceDashboard from "../pages/finance/FinanceDashboard";
 import LenderDashboard from "../pages/lender/LenderDashboard";
 import RenterDashboard from "../pages/renter/RenterDashboard";
+
+const STAFF_NAV_ITEMS: DashboardNavItem[] = [
+    { key: "overview", label: "Overview", path: "/staff" },
+    { key: "users", label: "Users", path: "/staff/users" },
+    { key: "documents", label: "Documents", path: "/staff/documents" },
+    { key: "errors", label: "Error Reports", path: "/staff/errors" },
+];
 
 const ADMIN_NAV_ITEMS: DashboardNavItem[] = [
     { key: "overview", label: "Overview", path: "/admin" },
@@ -84,8 +92,13 @@ export const router = createBrowserRouter([
         element: <ProtectedRoute roles={["admin", "support"]} />,
         children: [
             {
-                element: <DashboardLayout title="Admin & Support" />,
-                children: [{ index: true, element: <StaffDashboard /> }],
+                element: <DashboardLayout title="Admin & Support" navItems={STAFF_NAV_ITEMS} />,
+                children: [
+                    { index: true, element: <StaffDashboard /> },
+                    { path: "users", element: <StaffUserManagement /> },
+                    { path: "documents", element: <DocumentLookup /> },
+                    { path: "errors", element: <ErrorReports /> },
+                ],
             },
         ],
     },
