@@ -53,6 +53,27 @@ async function setBookingStatus(id, status) {
     return toPublicBooking(rows[0]);
 }
 
+// Just the date ranges (no renter identity) for any pending/confirmed booking on this
+// item — this is what powers the public "is it available" calendar, so it deliberately
+// exposes nothing about who booked it.
+async function listBookedDateRanges(itemId, { from, to } = {}) {
+    const params = [itemId];
+    let where = `item_id = $1 AND status IN ('pending', 'confirmed')`;
+    if (from) {
+        params.push(from);
+        where += ` AND end_date >= $${params.length}`;
+    }
+    if (to) {
+        params.push(to);
+        where += ` AND start_date <= $${params.length}`;
+    }
+    const { rows } = await pool.query(
+        `SELECT start_date, end_date FROM bookings WHERE ${where} ORDER BY start_date ASC`,
+        params
+    );
+    return rows.map((r) => ({ startDate: r.start_date, endDate: r.end_date }));
+}
+
 async function listBookingsForRenter(renterId) {
     const { rows } = await pool.query(
         'SELECT * FROM bookings WHERE renter_id = $1 ORDER BY created_at DESC',
@@ -79,6 +100,7 @@ module.exports = {
     createBooking,
     findBookingById,
     setBookingStatus,
+    listBookedDateRanges,
     listBookingsForRenter,
     listBookingsForOwner,
 };

@@ -12,6 +12,7 @@ const {
     listBookingsForOwner,
 } = require('../models/bookingModel');
 const { createDocument, listDocumentsForBooking } = require('../models/documentModel');
+const { hasAvailabilityBlockOverlap } = require('../models/itemAvailabilityModel');
 
 const router = express.Router();
 
@@ -62,6 +63,10 @@ router.post('/', attachUser, requireAuth, requireCapability('isRenter'), async (
     const overlap = await hasOverlap(itemId, startDate, endDate);
     if (overlap) {
         return res.status(409).json({ ok: false, error: 'Item is not available for those dates' });
+    }
+    const blocked = await hasAvailabilityBlockOverlap(itemId, startDate, endDate);
+    if (blocked) {
+        return res.status(409).json({ ok: false, error: 'The lender has marked those dates as unavailable' });
     }
 
     const days = daysBetween(startDate, endDate);

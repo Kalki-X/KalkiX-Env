@@ -133,3 +133,38 @@ CREATE TABLE IF NOT EXISTS error_log (
     created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_error_log_created ON error_log(created_at);
+
+-- Phase 5: pickup location for an item. Address is free text; lat/lng are optional
+-- (set when the lender drops a pin on the map) and used together for the renter-facing
+-- pickup map.
+ALTER TABLE items ADD COLUMN IF NOT EXISTS pickup_address TEXT;
+ALTER TABLE items ADD COLUMN IF NOT EXISTS pickup_lat NUMERIC(10, 6);
+ALTER TABLE items ADD COLUMN IF NOT EXISTS pickup_lng NUMERIC(10, 6);
+
+-- Item photos. Stored as bytea directly in Postgres rather than on disk/object storage
+-- — this app has no volume-mounted uploads directory or cloud storage configured, and
+-- keeping images in the same durable Postgres volume means they survive container
+-- rebuilds with zero extra infra. Upload size is capped at the application layer.
+CREATE TABLE IF NOT EXISTS item_images (
+    id             BIGSERIAL PRIMARY KEY,
+    item_id        BIGINT NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+    mime_type      TEXT NOT NULL,
+    data           BYTEA NOT NULL,
+    position       INTEGER NOT NULL DEFAULT 0,
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_item_images_item ON item_images(item_id);
+
+-- Lender-defined blackout dates — independent of bookings (e.g. the item is being
+-- serviced, or the lender just doesn't want it rented that week). Renters see these
+-- merged with existing pending/confirmed bookings as "unavailable" on the calendar.
+CREATE TABLE IF NOT EXISTS item_availability_blocks (
+    id             BIGSERIAL PRIMARY KEY,
+    item_id        BIGINT NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+    start_date     DATE NOT NULL,
+    end_date       DATE NOT NULL,
+    reason         TEXT,
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CHECK (end_date >= start_date)
+);
+CREATE INDEX IF NOT EXISTS idx_item_availability_item ON item_availability_blocks(item_id);
