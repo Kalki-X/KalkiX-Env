@@ -5,8 +5,9 @@ const { logAudit, clientIp } = require('../utils/audit');
 
 const router = express.Router();
 
-// Super Admin only, per spec.
-router.use(attachUser, requireAuth, requireRole('super_admin'));
+// Super Admin and Finance — Finance's "manage the GearShare account" capability
+// includes platform-wide revenue visibility (same data Super Admin sees).
+router.use(attachUser, requireAuth, requireRole('super_admin', 'finance'));
 
 router.get('/sales', async (req, res) => {
     const report = await getSalesReport({

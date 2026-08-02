@@ -20,6 +20,13 @@ import FinanceDashboard from "../pages/finance/FinanceDashboard";
 import LenderDashboard from "../pages/lender/LenderDashboard";
 import RenterDashboard from "../pages/renter/RenterDashboard";
 
+const FINANCE_NAV_ITEMS: DashboardNavItem[] = [
+    { key: "overview", label: "Overview", path: "/finance" },
+    { key: "reports", label: "Revenue Reports", path: "/finance/reports" },
+    { key: "payments", label: "Payments", path: "/finance/payments" },
+    { key: "documents", label: "Documents", path: "/finance/documents" },
+];
+
 const STAFF_NAV_ITEMS: DashboardNavItem[] = [
     { key: "overview", label: "Overview", path: "/staff" },
     { key: "users", label: "Users", path: "/staff/users" },
@@ -107,8 +114,13 @@ export const router = createBrowserRouter([
         element: <ProtectedRoute roles={["finance"]} />,
         children: [
             {
-                element: <DashboardLayout title="Finance" />,
-                children: [{ index: true, element: <FinanceDashboard /> }],
+                element: <DashboardLayout title="Finance" navItems={FINANCE_NAV_ITEMS} />,
+                children: [
+                    { index: true, element: <FinanceDashboard /> },
+                    { path: "reports", element: <SalesReports /> },
+                    { path: "payments", element: <PaymentManagement /> },
+                    { path: "documents", element: <DocumentLookup /> },
+                ],
             },
         ],
     },
