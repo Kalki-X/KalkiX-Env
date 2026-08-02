@@ -289,7 +289,10 @@ router.use((err, _req, res, next) => {
 
 // Public: merges lender-defined blocks with existing pending/confirmed bookings into a
 // single "unavailable" date-range list, without exposing who booked what. Powers the
-// renter-facing availability calendar.
+// renter-facing availability calendar. Block entries include `id` (harmless to expose —
+// just a sequence number) so the lender's own management UI can reuse this same
+// response to know which entries are removable blocks (id present) vs. bookings
+// (id null, cancel the booking instead).
 router.get('/:id/availability', attachUser, async (req, res) => {
     const { from, to } = req.query;
     const [blocks, booked] = await Promise.all([
@@ -297,8 +300,8 @@ router.get('/:id/availability', attachUser, async (req, res) => {
         listBookedDateRanges(req.params.id, { from, to }),
     ]);
     const unavailable = [
-        ...blocks.map((b) => ({ startDate: b.startDate, endDate: b.endDate, reason: b.reason || 'Unavailable' })),
-        ...booked.map((b) => ({ startDate: b.startDate, endDate: b.endDate, reason: 'Booked' })),
+        ...blocks.map((b) => ({ id: b.id, startDate: b.startDate, endDate: b.endDate, reason: b.reason || 'Unavailable' })),
+        ...booked.map((b) => ({ id: null, startDate: b.startDate, endDate: b.endDate, reason: 'Booked' })),
     ];
     res.json({ ok: true, unavailable });
 });

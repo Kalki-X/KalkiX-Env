@@ -74,24 +74,46 @@ async function listBookedDateRanges(itemId, { from, to } = {}) {
     return rows.map((r) => ({ startDate: r.start_date, endDate: r.end_date }));
 }
 
+// Same shape documentModel.js's findByDocumentNumberWithContext uses — item + the
+// other party's name/email, so the dashboard list is self-contained (no follow-up
+// per-row requests) and each side has what they need to coordinate pickup.
+function toEnrichedBooking(row) {
+    return {
+        ...toPublicBooking(row),
+        item: { id: row.item_id_full, title: row.item_title },
+        otherParty: { id: row.other_party_id, name: `${row.other_party_first_name} ${row.other_party_last_name}`, email: row.other_party_email },
+    };
+}
+
 async function listBookingsForRenter(renterId) {
     const { rows } = await pool.query(
-        'SELECT * FROM bookings WHERE renter_id = $1 ORDER BY created_at DESC',
+        `SELECT b.*, i.id AS item_id_full, i.title AS item_title,
+                owner.id AS other_party_id, owner.first_name AS other_party_first_name,
+                owner.last_name AS other_party_last_name, owner.email AS other_party_email
+         FROM bookings b
+         JOIN items i ON i.id = b.item_id
+         JOIN users owner ON owner.id = i.owner_id
+         WHERE b.renter_id = $1
+         ORDER BY b.created_at DESC`,
         [renterId]
     );
-    return rows.map(toPublicBooking);
+    return rows.map(toEnrichedBooking);
 }
 
 // Bookings for items owned by a given lender (join through items).
 async function listBookingsForOwner(ownerId) {
     const { rows } = await pool.query(
-        `SELECT b.* FROM bookings b
+        `SELECT b.*, i.id AS item_id_full, i.title AS item_title,
+                renter.id AS other_party_id, renter.first_name AS other_party_first_name,
+                renter.last_name AS other_party_last_name, renter.email AS other_party_email
+         FROM bookings b
          JOIN items i ON i.id = b.item_id
+         JOIN users renter ON renter.id = b.renter_id
          WHERE i.owner_id = $1
          ORDER BY b.created_at DESC`,
         [ownerId]
     );
-    return rows.map(toPublicBooking);
+    return rows.map(toEnrichedBooking);
 }
 
 module.exports = {
