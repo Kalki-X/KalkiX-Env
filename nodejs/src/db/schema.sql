@@ -168,3 +168,9 @@ CREATE TABLE IF NOT EXISTS item_availability_blocks (
     CHECK (end_date >= start_date)
 );
 CREATE INDEX IF NOT EXISTS idx_item_availability_item ON item_availability_blocks(item_id);
+
+-- Profile picture, stored the same way as item photos (bytea in Postgres — no
+-- volume-mounted uploads dir configured). A user has at most one, so this is just two
+-- nullable columns on the row rather than a separate table.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_mime_type TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_data BYTEA;

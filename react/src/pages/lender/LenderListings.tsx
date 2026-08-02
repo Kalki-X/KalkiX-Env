@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Typography, Table, Tag, Button, Space, Alert, Popconfirm, message, Avatar, Select } from "antd";
+import { Typography, Table, Tag, Button, Space, Alert, Popconfirm, message, Avatar, Select, Input } from "antd";
 import { PlusOutlined, EditOutlined, DeleteOutlined, InboxOutlined } from "@ant-design/icons";
 import {
     Item,
@@ -25,14 +25,15 @@ const STATUS_COLOR: Record<ItemStatus, string> = {
 export default function LenderListings() {
     const navigate = useNavigate();
     const [items, setItems] = useState<Item[]>([]);
+    const [search, setSearch] = useState("");
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-    const load = async () => {
+    const load = async (searchValue = search) => {
         setLoading(true);
         setErrorMessage(null);
         try {
-            setItems(await listMyItems());
+            setItems(await listMyItems({ search: searchValue || undefined }));
         } catch (err) {
             setErrorMessage(getApiErrorMessage(err, "Could not load your listings."));
         } finally {
@@ -42,6 +43,7 @@ export default function LenderListings() {
 
     useEffect(() => {
         load();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const onStatusChange = async (item: Item, status: ItemStatus) => {
@@ -79,6 +81,15 @@ export default function LenderListings() {
                     Add listing
                 </Button>
             </Space>
+
+            <Input.Search
+                placeholder="Search your listings by title or description"
+                allowClear
+                style={{ maxWidth: 360 }}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onSearch={(value) => load(value)}
+            />
 
             {errorMessage && <Alert type="error" showIcon message={errorMessage} />}
 

@@ -71,8 +71,8 @@ export async function getItem(id: number): Promise<Item> {
 
 // ---------- Lender: listing management ----------
 
-export async function listMyItems(): Promise<Item[]> {
-    const { data } = await apiClient.get("/api/items/mine");
+export async function listMyItems(params: { search?: string } = {}): Promise<Item[]> {
+    const { data } = await apiClient.get("/api/items/mine", { params });
     return data.items;
 }
 
@@ -109,10 +109,23 @@ export async function listItemImages(itemId: number): Promise<ItemImage[]> {
 export async function uploadItemImage(itemId: number, file: File): Promise<ItemImage> {
     const form = new FormData();
     form.append("image", file);
-    // Deliberately no explicit Content-Type header — axios detects the FormData body
-    // and lets the browser set the multipart boundary itself. Setting it manually here
-    // would omit the boundary parameter and the upload would fail server-side.
-    const { data } = await apiClient.post(`/api/items/${itemId}/images`, form);
+    // Deliberately plain fetch, not apiClient/axios, for this one call. apiClient sets
+    // a default 'Content-Type: application/json' header on every request; some
+    // axios/browser combinations keep that header as-is for a FormData body instead of
+    // letting the browser fill in the multipart boundary, which silently produces a
+    // body multer can't parse (req.file ends up undefined server-side). A plain fetch
+    // with no Content-Type header set lets the browser generate the correct
+    // 'multipart/form-data; boundary=...' header itself — the same thing that already
+    // proved reliable end-to-end in this feature's integration tests.
+    const res = await fetch(`${apiBaseUrl}/api/items/${itemId}/images`, {
+        method: "POST",
+        credentials: "include", // send the httpOnly auth cookie, matching apiClient's withCredentials
+        body: form,
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+        throw new Error(data?.error || `Upload failed (${res.status})`);
+    }
     return data.image;
 }
 

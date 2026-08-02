@@ -67,7 +67,7 @@ router.get('/', attachUser, async (req, res) => {
 });
 
 router.get('/mine', attachUser, requireAuth, requireCapability('isLender'), async (req, res) => {
-    const items = await listItemsByOwner(req.user.id);
+    const items = await listItemsByOwner(req.user.id, { search: req.query.search });
     res.json({ ok: true, items });
 });
 

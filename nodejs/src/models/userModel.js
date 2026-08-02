@@ -3,7 +3,8 @@ const crypto = require('crypto');
 const { pool } = require('../db/pool');
 
 const PUBLIC_COLUMNS = `
-    id, first_name, last_name, email, phone, role, is_renter, is_lender, status, created_at
+    id, first_name, last_name, email, phone, role, is_renter, is_lender, status, created_at,
+    (avatar_data IS NOT NULL) AS has_avatar
 `;
 
 function toPublicUser(row) {
@@ -19,6 +20,7 @@ function toPublicUser(row) {
         isLender: row.is_lender,
         status: row.status,
         createdAt: row.created_at,
+        hasAvatar: !!row.has_avatar,
     };
 }
 
@@ -157,6 +159,33 @@ async function updateUserAdmin(id, { role, isRenter, isLender, status }) {
     return toPublicUser(rows[0]);
 }
 
+// Self-service profile edit — deliberately its own function (not a generic "update
+// user" call) that only ever touches phone. Email is the account's login identity and
+// isn't editable here at all; role/status/capabilities are Super Admin/staff-only
+// (see updateUserAdmin above) and this function has no way to touch them even if a
+// caller tried to pass extra fields through, by construction.
+async function updateOwnProfile(id, { phone }) {
+    const { rows } = await pool.query(
+        `UPDATE users SET phone = $1, updated_at = now() WHERE id = $2 RETURNING ${PUBLIC_COLUMNS}`,
+        [phone ?? null, id]
+    );
+    return toPublicUser(rows[0]);
+}
+
+async function setAvatar(id, { mimeType, data }) {
+    const { rows } = await pool.query(
+        `UPDATE users SET avatar_mime_type = $1, avatar_data = $2, updated_at = now() WHERE id = $3 RETURNING ${PUBLIC_COLUMNS}`,
+        [mimeType, data, id]
+    );
+    return toPublicUser(rows[0]);
+}
+
+// Raw bytes + mime type for the avatar-serving route — never exposed via toPublicUser.
+async function findAvatar(id) {
+    const { rows } = await pool.query('SELECT avatar_mime_type, avatar_data FROM users WHERE id = $1', [id]);
+    return rows[0] || null;
+}
+
 module.exports = {
     findByEmail,
     findById,
@@ -168,6 +197,9 @@ module.exports = {
     listUsers,
     countActiveSuperAdmins,
     updateUserAdmin,
+    updateOwnProfile,
+    setAvatar,
+    findAvatar,
     toPublicUser,
     VALID_ROLES,
     VALID_STATUSES,

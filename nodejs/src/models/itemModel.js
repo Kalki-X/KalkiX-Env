@@ -48,10 +48,16 @@ async function listActiveItems({ category, search } = {}) {
     return rows.map(toPublicItem);
 }
 
-async function listItemsByOwner(ownerId) {
+async function listItemsByOwner(ownerId, { search } = {}) {
+    const params = [ownerId];
+    let where = 'i.owner_id = $1';
+    if (search) {
+        params.push(`%${search}%`);
+        where += ` AND (i.title ILIKE $${params.length} OR i.description ILIKE $${params.length})`;
+    }
     const { rows } = await pool.query(
-        `SELECT i.*, ${PRIMARY_IMAGE_SUBQUERY} FROM items i WHERE i.owner_id = $1 ORDER BY i.created_at DESC`,
-        [ownerId]
+        `SELECT i.*, ${PRIMARY_IMAGE_SUBQUERY} FROM items i WHERE ${where} ORDER BY i.created_at DESC`,
+        params
     );
     return rows.map(toPublicItem);
 }

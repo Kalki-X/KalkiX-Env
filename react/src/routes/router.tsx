@@ -17,6 +17,7 @@ import ErrorReports from "../pages/admin/ErrorReports";
 import StaffDashboard from "../pages/staff/StaffDashboard";
 import StaffUserManagement from "../pages/staff/UserManagement";
 import FinanceDashboard from "../pages/finance/FinanceDashboard";
+import Profile from "../pages/Profile";
 import LenderDashboard from "../pages/lender/LenderDashboard";
 import LenderListings from "../pages/lender/LenderListings";
 import LenderListingForm from "../pages/lender/LenderListingForm";
@@ -81,6 +82,18 @@ export const router = createBrowserRouter([
     {
         path: "/test",
         element: <Home />
+    },
+
+    // Any authenticated user, regardless of role — no `roles`/`capability` restriction.
+    {
+        path: "/profile",
+        element: <ProtectedRoute />,
+        children: [
+            {
+                element: <DashboardLayout title="My Profile" />,
+                children: [{ index: true, element: <Profile /> }],
+            },
+        ],
     },
 
     // Role-gated dashboards. Each ProtectedRoute checks auth + role/capability

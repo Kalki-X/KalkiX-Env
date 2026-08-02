@@ -3,6 +3,7 @@ import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
 import { Layout, Space, Tag, Typography, Button, Avatar, Menu, Grid, Drawer } from "antd";
 import { LogoutOutlined, ShopOutlined, UserOutlined, MenuOutlined } from "@ant-design/icons";
 import { useAuth } from "../features/auth/context/AuthContext";
+import { userAvatarUrl } from "../features/auth/api/authApi";
 
 export interface DashboardNavItem {
     key: string;
@@ -60,8 +61,14 @@ export default function DashboardLayout({ title, navItems }: { title: string; na
     const selectedNavKey = navItems?.find((item) => item.path === location.pathname)?.key ?? navItems?.[0]?.key;
 
     const identity = user && (
-        <Space size="small" align="center">
-            <Avatar size="small" icon={<UserOutlined />} />
+        <Space
+            size="small"
+            align="center"
+            style={{ cursor: "pointer" }}
+            onClick={() => goTo("/profile")}
+            title="Edit your profile"
+        >
+            <Avatar size="small" icon={<UserOutlined />} src={user.hasAvatar ? userAvatarUrl(user.id) : undefined} />
             <Text style={{ color: "#2B2E4A" }}>
                 {user.firstName} {user.lastName}
             </Text>

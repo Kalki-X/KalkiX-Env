@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const { findByEmail, createUser, updatePasswordHash, toPublicUser } = require('../models/userModel');
+const multer = require('multer');
+const { findByEmail, createUser, updatePasswordHash, toPublicUser, updateOwnProfile, setAvatar } = require('../models/userModel');
 const { createResetToken, findValidToken, markTokenUsed } = require('../models/passwordResetModel');
 const { signToken, setAuthCookie, clearAuthCookie, attachUser, requireAuth } = require('../middleware/auth');
 const { logAudit, clientIp } = require('../utils/audit');
@@ -132,6 +133,66 @@ router.post('/logout', attachUser, async (req, res) => {
 
 router.get('/me', attachUser, requireAuth, (req, res) => {
     res.json({ ok: true, user: req.user });
+});
+
+// Self-service profile edit: phone number only. Email is the login identity and is
+// deliberately not accepted here at all — changing it would need re-verification,
+// which is out of scope for now — and role/status/capabilities stay Super
+// Admin/staff-only (see admin.routes.js / staffUsers.routes.js).
+router.patch('/me', attachUser, requireAuth, async (req, res) => {
+    const { phone } = req.body || {};
+    if (phone !== undefined && phone !== null && typeof phone !== 'string') {
+        return res.status(400).json({ ok: false, error: 'Invalid phone number' });
+    }
+    const updated = await updateOwnProfile(req.user.id, { phone });
+
+    await logAudit({
+        userId: req.user.id,
+        action: 'user.profile_updated',
+        entityType: 'user',
+        entityId: req.user.id,
+        metadata: { phone: phone || null },
+        ip: clientIp(req),
+    });
+
+    res.json({ ok: true, user: updated });
+});
+
+const avatarUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 2 * 1024 * 1024 }, // 2MB — a profile picture, not a gallery photo
+    fileFilter: (_req, file, cb) => {
+        if (!file.mimetype.startsWith('image/')) {
+            return cb(new Error('Only image files are allowed'));
+        }
+        cb(null, true);
+    },
+});
+
+router.post('/me/avatar', attachUser, requireAuth, avatarUpload.single('avatar'), async (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ ok: false, error: 'No image file uploaded (field name must be "avatar")' });
+    }
+    const updated = await setAvatar(req.user.id, { mimeType: req.file.mimetype, data: req.file.buffer });
+
+    await logAudit({
+        userId: req.user.id,
+        action: 'user.avatar_updated',
+        entityType: 'user',
+        entityId: req.user.id,
+        ip: clientIp(req),
+    });
+
+    res.json({ ok: true, user: updated });
+});
+
+// Multer errors (oversized file, wrong mimetype) reach here as regular thrown errors —
+// surface them as 400s instead of falling through to the generic 500 handler.
+router.use((err, _req, res, next) => {
+    if (err instanceof multer.MulterError || (err && /image files/i.test(err.message))) {
+        return res.status(400).json({ ok: false, error: err.message });
+    }
+    next(err);
 });
 
 // Always returns the same generic response whether or not the email exists —
