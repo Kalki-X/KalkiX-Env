@@ -179,12 +179,14 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_data BYTEA;
 -- "pending" (implicitly awaiting payment) — it now needs an explicit lender decision
 -- first: 'pending_approval' -> 'awaiting_payment' (approved, proforma issued, renter can
 -- pay) or 'rejected' (mandatory reason, terminal). 'confirmed'/'cancelled'/'completed'
--- are unchanged. Existing rows from before this migration are 'pending', which no
--- longer satisfies the CHECK below — remap them to 'awaiting_payment' first (they
--- already had a proforma issued under the old flow, matching that status's meaning)
--- before swapping the constraint, so this stays safe to run against a live database.
-UPDATE bookings SET status = 'awaiting_payment' WHERE status = 'pending';
+-- are unchanged. Existing rows from before this migration are 'pending', which doesn't
+-- satisfy the new CHECK below — the constraint must be dropped *before* that remap runs,
+-- otherwise the UPDATE itself is rejected by the still-active old constraint (which only
+-- allowed 'pending'/'confirmed'/'cancelled'/'completed'), aborting this whole script
+-- before it ever reaches the items/documents ALTERs further down. Remap after dropping,
+-- then add the new constraint back so it validates against the now-conforming data.
 ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_status_check;
+UPDATE bookings SET status = 'awaiting_payment' WHERE status = 'pending';
 ALTER TABLE bookings ADD CONSTRAINT bookings_status_check
     CHECK (status IN ('pending_approval', 'awaiting_payment', 'rejected', 'confirmed', 'cancelled', 'completed'));
 
