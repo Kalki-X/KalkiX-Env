@@ -23,7 +23,14 @@ function ThemedApp() {
                     colorInfo: "#5D79BB",
                     borderRadius: 8,
                     colorText: isDark ? "#e2e8f0" : "#1e293b",
-                    colorBgBase: isDark ? "#0f172a" : "var(--color-background)",
+                    // NOTE: these must be real color values antd's token-derivation math can
+                    // parse (it computes colorBgContainer/colorBgElevated/etc. from this) —
+                    // a CSS var() reference can't be resolved here (that only happens later,
+                    // in the browser, when the var is used directly in a stylesheet), and
+                    // silently breaks every derived background token, which is what made
+                    // every Card/Table go solid black. Keep this in sync with
+                    // --color-background's light-mode value in styles/main.css.
+                    colorBgBase: isDark ? "#0f172a" : "#E7EEF7",
                 },
             }}
         >
