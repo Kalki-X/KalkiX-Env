@@ -103,6 +103,33 @@ export async function deleteItem(id: number): Promise<void> {
     await apiClient.delete(`/api/items/${id}`);
 }
 
+// ---------- Featured listings (homepage "Trending" monetization) ----------
+
+export interface FeaturedListing {
+    id: number;
+    itemId: number;
+    itemTitle: string;
+    startsAt: string;
+    endsAt: string;
+    feeAmount: number;
+    currency: string;
+    status: "active" | "cancelled";
+    createdAt: string;
+}
+
+export async function listMyFeatured(): Promise<FeaturedListing[]> {
+    const { data } = await apiClient.get("/api/items/mine/featured");
+    return data.featured;
+}
+
+// Simulated payment, matching how booking payments work today — see the confirm
+// endpoint. `days` is 1-90; the fee is computed server-side from the admin-configured
+// per-day price so this call never needs to know that price itself.
+export async function featureItem(itemId: number, days: number): Promise<FeaturedListing> {
+    const { data } = await apiClient.post(`/api/items/${itemId}/feature`, { days });
+    return data.featured;
+}
+
 // ---------- Images ----------
 
 export function itemImageUrl(itemId: number, imageId: number): string {

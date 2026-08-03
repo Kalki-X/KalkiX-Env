@@ -165,6 +165,10 @@ export interface PaymentRecord {
     method: string | null;
     status: "pending" | "succeeded" | "failed" | "refunded";
     providerRef: string | null;
+    // The platform's configurable commission taken out of this payment, and what's left
+    // for the lender's payout. Both null for payments made before this was tracked.
+    platformFeeAmount: number | null;
+    payoutAmount: number | null;
     createdAt: string;
     item: { id: number; title: string } | null;
     renter: { id: number; name: string; email: string } | null;

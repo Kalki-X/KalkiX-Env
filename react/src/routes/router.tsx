@@ -15,6 +15,7 @@ import SalesReports from "../pages/admin/SalesReports";
 import PaymentManagement from "../pages/admin/PaymentManagement";
 import ErrorReports from "../pages/admin/ErrorReports";
 import EmailTemplates from "../pages/admin/EmailTemplates";
+import SiteSettings from "../pages/admin/SiteSettings";
 import StaffDashboard from "../pages/staff/StaffDashboard";
 import StaffUserManagement from "../pages/staff/UserManagement";
 import FinanceDashboard from "../pages/finance/FinanceDashboard";
@@ -30,6 +31,7 @@ import RenterBrowse from "../pages/renter/RenterBrowse";
 import ItemDetail from "../pages/renter/ItemDetail";
 import RenterBookings from "../pages/renter/RenterBookings";
 import RenterBookingDetail from "../pages/renter/RenterBookingDetail";
+import PublicBrowse from "../pages/PublicBrowse";
 import { useAuth } from "../features/auth/context/AuthContext";
 
 const FINANCE_NAV_ITEMS: DashboardNavItem[] = [
@@ -52,6 +54,7 @@ const STAFF_NAV_ITEMS_BASE: DashboardNavItem[] = [
 const STAFF_NAV_ITEMS_ADMIN: DashboardNavItem[] = [
     ...STAFF_NAV_ITEMS_BASE,
     { key: "email-templates", label: "Email Templates", path: "/staff/email-templates" },
+    { key: "site-settings", label: "Homepage", path: "/staff/site-settings" },
 ];
 
 function StaffLayout() {
@@ -81,6 +84,7 @@ const ADMIN_NAV_ITEMS: DashboardNavItem[] = [
     { key: "payments", label: "Payments", path: "/admin/payments" },
     { key: "errors", label: "Error Reports", path: "/admin/errors" },
     { key: "email-templates", label: "Email Templates", path: "/admin/email-templates" },
+    { key: "site-settings", label: "Homepage", path: "/admin/site-settings" },
 ];
 
 export const router = createBrowserRouter([
@@ -111,6 +115,14 @@ export const router = createBrowserRouter([
     {
         path: "/test",
         element: <Home />
+    },
+    // Public marketplace browse/search — reachable by anyone, no login required. This is
+    // what the homepage search bar and category tiles link to; booking an item still
+    // requires signing in (the item detail route is gated and bounces to /login, then
+    // back here via ProtectedRoute's from-redirect).
+    {
+        path: "/browse",
+        element: <PublicBrowse />
     },
 
     // Any authenticated user, regardless of role — no `roles`/`capability` restriction.
@@ -152,6 +164,7 @@ export const router = createBrowserRouter([
                     { path: "payments", element: <PaymentManagement /> },
                     { path: "errors", element: <ErrorReports /> },
                     { path: "email-templates", element: <EmailTemplates /> },
+                    { path: "site-settings", element: <SiteSettings /> },
                 ],
             },
         ],
@@ -172,7 +185,10 @@ export const router = createBrowserRouter([
                         // on the backend route; redirect them to their own dashboard instead
                         // of letting them hit a raw 403 from the API.
                         element: <ProtectedRoute roles={["admin"]} />,
-                        children: [{ path: "email-templates", element: <EmailTemplates /> }],
+                        children: [
+                            { path: "email-templates", element: <EmailTemplates /> },
+                            { path: "site-settings", element: <SiteSettings /> },
+                        ],
                     },
                 ],
             },

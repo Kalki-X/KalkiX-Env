@@ -292,3 +292,97 @@ INSERT INTO email_templates (type, subject, body) VALUES
         E'The booking for "{{itemTitle}}" ({{startDate}} to {{endDate}}) was cancelled.\n\n{{creditNoteLine}}'
     )
 ON CONFLICT (type) DO NOTHING;
+
+-- Phase 9: public marketplace homepage becomes admin-manageable, plus a configurable
+-- platform commission. Per the feature request, the platform fee is deducted from the
+-- lender's payout (the renter is still charged exactly the listed price) — so it only
+-- ever needs to be tracked on the payment record, never on the renter-facing invoice.
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS platform_fee_amount NUMERIC(10, 2);
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS payout_amount NUMERIC(10, 2);
+
+-- Singleton settings row (id is pinned to 1 by the CHECK) holding the site logo, the
+-- platform commission percent, and the price of a "featured listing" slot. A
+-- single-row table (rather than a generic key/value store) keeps every read a plain
+-- `WHERE id = 1` with no key-name typos possible.
+CREATE TABLE IF NOT EXISTS site_settings (
+    id                              INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+    logo_mime_type                  TEXT,
+    logo_data                       BYTEA,
+    platform_fee_percent            NUMERIC(5, 2) NOT NULL DEFAULT 0
+                                     CHECK (platform_fee_percent >= 0 AND platform_fee_percent <= 100),
+    featured_listing_price_per_day  NUMERIC(10, 2) NOT NULL DEFAULT 5
+                                     CHECK (featured_listing_price_per_day >= 0),
+    featured_listing_currency       TEXT NOT NULL DEFAULT 'USD',
+    updated_by                      BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    updated_at                      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+INSERT INTO site_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+
+-- Categories are now admin-managed (name + optional icon image + display order)
+-- instead of a hardcoded frontend list, so Super Admin/Admin can add one "upon
+-- request" without a code change. `category` on items stays a free-text column for
+-- backward compatibility with existing listings — this table just drives what shows up
+-- as selectable options in the UI.
+CREATE TABLE IF NOT EXISTS categories (
+    id             BIGSERIAL PRIMARY KEY,
+    name           TEXT NOT NULL UNIQUE,
+    icon_mime_type TEXT,
+    icon_data      BYTEA,
+    sort_order     INTEGER NOT NULL DEFAULT 0,
+    active         BOOLEAN NOT NULL DEFAULT true,
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_by     BIGINT REFERENCES users(id) ON DELETE SET NULL
+);
+CREATE INDEX IF NOT EXISTS idx_categories_sort ON categories(sort_order);
+
+-- Seed with the categories that used to be hardcoded on the frontend, so nothing on
+-- existing listings/forms appears to disappear the moment this ships.
+INSERT INTO categories (name, sort_order) VALUES
+    ('Tools', 0),
+    ('Electronics', 1),
+    ('Outdoor & Camping', 2),
+    ('Sports & Fitness', 3),
+    ('Vehicles', 4),
+    ('Furniture', 5),
+    ('Party & Events', 6),
+    ('Other', 7)
+ON CONFLICT (name) DO NOTHING;
+
+-- Admin-managed homepage hero carousel. Empty by default (no seed rows) — the
+-- frontend falls back to its existing static slides until an admin adds real ones, so
+-- shipping this never blanks out the homepage.
+CREATE TABLE IF NOT EXISTS carousel_slides (
+    id              BIGSERIAL PRIMARY KEY,
+    image_mime_type TEXT NOT NULL,
+    image_data      BYTEA NOT NULL,
+    headline        TEXT,
+    subtext         TEXT,
+    link_url        TEXT,
+    sort_order      INTEGER NOT NULL DEFAULT 0,
+    active          BOOLEAN NOT NULL DEFAULT true,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_by      BIGINT REFERENCES users(id) ON DELETE SET NULL
+);
+CREATE INDEX IF NOT EXISTS idx_carousel_sort ON carousel_slides(sort_order);
+
+-- A lender pays a (simulated, per the current payment flow) fee to have their item
+-- shown in the homepage "Trending" rail for a chosen number of days. Never deleted —
+-- `status = 'cancelled'` records an admin manually pulling a slot early — so this
+-- doubles as the audit trail for featured-listing revenue. Expiry is just
+-- `ends_at <= now()`, checked at read time; no background job needed.
+CREATE TABLE IF NOT EXISTS featured_listings (
+    id            BIGSERIAL PRIMARY KEY,
+    item_id       BIGINT NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+    purchased_by  BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    starts_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    ends_at       TIMESTAMPTZ NOT NULL,
+    fee_amount    NUMERIC(10, 2) NOT NULL CHECK (fee_amount >= 0),
+    currency      TEXT NOT NULL DEFAULT 'USD',
+    provider_ref  TEXT,
+    status        TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'cancelled')),
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_featured_item ON featured_listings(item_id);
+CREATE INDEX IF NOT EXISTS idx_featured_active_window ON featured_listings(status, ends_at);

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Typography, Table, Tag, Button, Space, Alert, Popconfirm, message, Avatar, Select, Input } from "antd";
-import { PlusOutlined, EditOutlined, DeleteOutlined, InboxOutlined } from "@ant-design/icons";
+import { Typography, Table, Tag, Button, Space, Alert, Popconfirm, message, Avatar, Select, Input, Modal, InputNumber } from "antd";
+import { PlusOutlined, EditOutlined, DeleteOutlined, InboxOutlined, StarOutlined } from "@ant-design/icons";
+import dayjs from "dayjs";
 import {
     Item,
     ItemStatus,
@@ -9,10 +10,13 @@ import {
     updateItemStatus,
     deleteItem,
     itemImageUrl,
+    listMyFeatured,
+    featureItem,
+    FeaturedListing,
 } from "../../features/listings/api/listingsApi";
 import { getApiErrorMessage } from "../../services/api/client";
 
-const { Title, Paragraph } = Typography;
+const { Title, Paragraph, Text } = Typography;
 const { Option } = Select;
 
 const STATUS_COLOR: Record<ItemStatus, string> = {
@@ -28,6 +32,10 @@ export default function LenderListings() {
     const [search, setSearch] = useState("");
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [featured, setFeatured] = useState<FeaturedListing[]>([]);
+    const [featureModalItem, setFeatureModalItem] = useState<Item | null>(null);
+    const [featureDays, setFeatureDays] = useState(7);
+    const [featuring, setFeaturing] = useState(false);
 
     const load = async (searchValue = search) => {
         setLoading(true);
@@ -41,10 +49,37 @@ export default function LenderListings() {
         }
     };
 
+    const loadFeatured = async () => {
+        try {
+            setFeatured(await listMyFeatured());
+        } catch {
+            // non-critical — the "Feature" button just won't show current status if this fails
+        }
+    };
+
     useEffect(() => {
         load();
+        loadFeatured();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    const activeFeaturedFor = (itemId: number) =>
+        featured.find((f) => f.itemId === itemId && f.status === "active" && dayjs(f.endsAt).isAfter(dayjs()));
+
+    const onPurchaseFeature = async () => {
+        if (!featureModalItem) return;
+        setFeaturing(true);
+        try {
+            await featureItem(featureModalItem.id, featureDays);
+            message.success(`"${featureModalItem.title}" is now featured on the homepage.`);
+            setFeatureModalItem(null);
+            loadFeatured();
+        } catch (err) {
+            message.error(getApiErrorMessage(err, "Could not feature this item."));
+        } finally {
+            setFeaturing(false);
+        }
+    };
 
     const onStatusChange = async (item: Item, status: ItemStatus) => {
         try {
@@ -140,6 +175,29 @@ export default function LenderListings() {
                         ),
                     },
                     {
+                        title: "Trending",
+                        key: "featured",
+                        render: (_, item) => {
+                            const active = activeFeaturedFor(item.id);
+                            if (active) {
+                                return <Tag color="gold">Featured until {dayjs(active.endsAt).format("DD MMM")}</Tag>;
+                            }
+                            return (
+                                <Button
+                                    size="small"
+                                    icon={<StarOutlined />}
+                                    disabled={item.status !== "active"}
+                                    onClick={() => {
+                                        setFeatureModalItem(item);
+                                        setFeatureDays(7);
+                                    }}
+                                >
+                                    Feature
+                                </Button>
+                            );
+                        },
+                    },
+                    {
                         title: "",
                         key: "actions",
                         render: (_, item) => (
@@ -159,6 +217,24 @@ export default function LenderListings() {
                     },
                 ]}
             />
+
+            <Modal
+                title={`Feature "${featureModalItem?.title ?? ''}" on the homepage`}
+                open={!!featureModalItem}
+                onCancel={() => setFeatureModalItem(null)}
+                onOk={onPurchaseFeature}
+                confirmLoading={featuring}
+                okText="Pay & feature"
+            >
+                <Paragraph style={{ color: "#64748b" }}>
+                    Paid placements appear in the "Trending" rail on the GearShare homepage. Payment is processed
+                    immediately (simulated, same as booking payments).
+                </Paragraph>
+                <Space align="center">
+                    <Text>Number of days:</Text>
+                    <InputNumber min={1} max={90} value={featureDays} onChange={(v) => setFeatureDays(v ?? 1)} />
+                </Space>
+            </Modal>
         </Space>
     );
 }

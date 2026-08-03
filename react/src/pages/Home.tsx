@@ -3,6 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../features/auth/context/AuthContext';
 import { resolveHomeRoute } from '../features/auth/utils/resolveHomeRoute';
 import {
+    getPublicCategories,
+    getPublicCarousel,
+    getTrendingItems,
+    siteLogoUrl,
+    categoryIconUrl,
+    carouselImageUrl,
+    PublicCategory,
+    CarouselSlide,
+    TrendingItem,
+} from '../features/siteContent/api/siteContentApi';
+import { itemImageUrl } from '../features/listings/api/listingsApi';
+import {
     Layout,
     Input,
     Button,
@@ -79,27 +91,22 @@ const ownerSteps = [
     },
 ];
 
-const categories = [
-    { title: 'Baby & Kids', icon: <SkinOutlined /> },
-    { title: 'Bikes', icon: <ThunderboltOutlined /> },
-    { title: 'Medical', icon: <HeartOutlined /> },
-    { title: 'Tools', icon: <ToolOutlined /> },
-    { title: 'Fitness', icon: <CameraOutlined /> },
-];
+// Fallback content, shown only until an admin configures real categories/trending
+// items/carousel slides via Super Admin > Homepage — so a fresh deployment never
+// looks broken or empty.
+const DEFAULT_CATEGORY_ICONS: Record<string, React.ReactNode> = {
+    'Baby & Kids': <SkinOutlined />,
+    Bikes: <ThunderboltOutlined />,
+    Medical: <HeartOutlined />,
+    Tools: <ToolOutlined />,
+    Fitness: <CameraOutlined />,
+};
+const DEFAULT_CATEGORIES = Object.keys(DEFAULT_CATEGORY_ICONS).map((title) => ({ title, icon: DEFAULT_CATEGORY_ICONS[title] }));
 
-const trendingItems = [
-    {
-        title: 'Sony ZV1',
-        booked: '30 booked this month',
-    },
-    {
-        title: 'PS5 Set',
-        booked: '15 booked this month',
-    },
-    {
-        title: 'Screwdriver Makita',
-        booked: '10 booked this month',
-    },
+const DEFAULT_TRENDING = [
+    { title: 'Sony ZV1', booked: '30 booked this month' },
+    { title: 'PS5 Set', booked: '15 booked this month' },
+    { title: 'Screwdriver Makita', booked: '10 booked this month' },
 ];
 
 const confidenceItems = [
@@ -153,8 +160,17 @@ const Home = () => {
 
     const isMobileOrTablet = !screens.lg;
 
+    const [logoOk, setLogoOk] = useState(true);
+    const [searchValue, setSearchValue] = useState('');
+    const [categories, setCategories] = useState<PublicCategory[]>([]);
+    const [carouselSlides, setCarouselSlides] = useState<CarouselSlide[]>([]);
+    const [trendingItems, setTrendingItems] = useState<TrendingItem[]>([]);
+
     useEffect(() => {
         document.title = 'GearShare - Home';
+        getPublicCategories().then(setCategories).catch(() => {});
+        getPublicCarousel().then(setCarouselSlides).catch(() => {});
+        getTrendingItems(6).then(setTrendingItems).catch(() => {});
     }, []);
 
     // Already signed in -> go straight to their dashboard. Signed out -> log in first.
@@ -162,6 +178,14 @@ const Home = () => {
     const goToAccount = () => {
         setDrawerOpen(false);
         navigate(user ? resolveHomeRoute(user) : '/login');
+    };
+
+    const goToBrowse = (params: { search?: string; category?: string } = {}) => {
+        const qs = new URLSearchParams();
+        if (params.search) qs.set('search', params.search);
+        if (params.category) qs.set('category', params.category);
+        const query = qs.toString();
+        navigate(query ? `/browse?${query}` : '/browse');
     };
 
     const howItWorksData = howItWorksMode === 'renters' ? renterSteps : ownerSteps;
@@ -200,22 +224,31 @@ const Home = () => {
                             flexShrink: 0,
                         }}
                     >
-                        <div
-                            style={{
-                                width: 48,
-                                height: 48,
-                                borderRadius: 14,
-                                background: '#2B2E4A',
-                                color: '#fff',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontWeight: 700,
-                                fontSize: 18,
-                            }}
-                        >
-                            GS
-                        </div>
+                        {logoOk ? (
+                            <img
+                                src={siteLogoUrl()}
+                                alt="GearShare"
+                                onError={() => setLogoOk(false)}
+                                style={{ width: 48, height: 48, borderRadius: 14, objectFit: 'contain' }}
+                            />
+                        ) : (
+                            <div
+                                style={{
+                                    width: 48,
+                                    height: 48,
+                                    borderRadius: 14,
+                                    background: '#2B2E4A',
+                                    color: '#fff',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontWeight: 700,
+                                    fontSize: 18,
+                                }}
+                            >
+                                GS
+                            </div>
+                        )}
 
                         <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
                             <Text style={{ fontSize: 18, fontWeight: 700, color: '#2B2E4A' }}>
@@ -233,6 +266,9 @@ const Home = () => {
                             size="large"
                             placeholder="Search for cameras, tools, speakers..."
                             prefix={<SearchOutlined style={{ color: '#64748b' }} />}
+                            value={searchValue}
+                            onChange={(e) => setSearchValue(e.target.value)}
+                            onPressEnter={() => goToBrowse({ search: searchValue })}
                             style={{
                                 borderRadius: 999,
                                 height: 46,
@@ -353,80 +389,118 @@ const Home = () => {
                             marginBottom: 28,
                         }}
                     >
-                        <Carousel autoplay dots>
-                            <div>
-                                <div
-                                    style={{
-                                        height: 280,
-                                        borderRadius: 16,
-                                        background: 'linear-gradient(135deg, #2B2E4A, #5D79BB)',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        justifyContent: 'center',
-                                        alignItems: 'center',
-                                        color: '#fff',
-                                        textAlign: 'center',
-                                        padding: 24,
-                                    }}
-                                >
-                                    <Title level={2} style={{ color: '#fff', marginBottom: 8 }}>
-                                        Rent what you need, when you need it
-                                    </Title>
-                                    <Paragraph style={{ color: '#eef2ff', maxWidth: 700, marginBottom: 0 }}>
-                                        Discover trusted rentals across tools, electronics, fitness gear, medical
-                                        items, and more.
-                                    </Paragraph>
+                        {carouselSlides.length > 0 ? (
+                            <Carousel autoplay dots>
+                                {carouselSlides.map((slide) => (
+                                    <div key={slide.id}>
+                                        <div
+                                            onClick={() => slide.linkUrl && (window.location.href = slide.linkUrl)}
+                                            style={{
+                                                height: 280,
+                                                borderRadius: 16,
+                                                backgroundImage: `linear-gradient(rgba(43,46,74,0.45), rgba(43,46,74,0.45)), url(${carouselImageUrl(slide.id)})`,
+                                                backgroundSize: 'cover',
+                                                backgroundPosition: 'center',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                justifyContent: 'center',
+                                                alignItems: 'center',
+                                                color: '#fff',
+                                                textAlign: 'center',
+                                                padding: 24,
+                                                cursor: slide.linkUrl ? 'pointer' : 'default',
+                                            }}
+                                        >
+                                            {slide.headline && (
+                                                <Title level={2} style={{ color: '#fff', marginBottom: 8 }}>
+                                                    {slide.headline}
+                                                </Title>
+                                            )}
+                                            {slide.subtext && (
+                                                <Paragraph style={{ color: '#eef2ff', maxWidth: 700, marginBottom: 0 }}>
+                                                    {slide.subtext}
+                                                </Paragraph>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </Carousel>
+                        ) : (
+                            <Carousel autoplay dots>
+                                <div>
+                                    <div
+                                        style={{
+                                            height: 280,
+                                            borderRadius: 16,
+                                            background: 'linear-gradient(135deg, #2B2E4A, #5D79BB)',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            color: '#fff',
+                                            textAlign: 'center',
+                                            padding: 24,
+                                        }}
+                                    >
+                                        <Title level={2} style={{ color: '#fff', marginBottom: 8 }}>
+                                            Rent what you need, when you need it
+                                        </Title>
+                                        <Paragraph style={{ color: '#eef2ff', maxWidth: 700, marginBottom: 0 }}>
+                                            Discover trusted rentals across tools, electronics, fitness gear, medical
+                                            items, and more.
+                                        </Paragraph>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div>
-                                <div
-                                    style={{
-                                        height: 280,
-                                        borderRadius: 16,
-                                        background: 'linear-gradient(135deg, #5D79BB, #2B2E4A)',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        justifyContent: 'center',
-                                        alignItems: 'center',
-                                        color: '#fff',
-                                        textAlign: 'center',
-                                        padding: 24,
-                                    }}
-                                >
-                                    <Title level={2} style={{ color: '#fff', marginBottom: 8 }}>
-                                        Turn unused items into income
-                                    </Title>
-                                    <Paragraph style={{ color: '#eef2ff', maxWidth: 700, marginBottom: 0 }}>
-                                        List your gear, accept bookings, and earn from things you already own.
-                                    </Paragraph>
+                                <div>
+                                    <div
+                                        style={{
+                                            height: 280,
+                                            borderRadius: 16,
+                                            background: 'linear-gradient(135deg, #5D79BB, #2B2E4A)',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            color: '#fff',
+                                            textAlign: 'center',
+                                            padding: 24,
+                                        }}
+                                    >
+                                        <Title level={2} style={{ color: '#fff', marginBottom: 8 }}>
+                                            Turn unused items into income
+                                        </Title>
+                                        <Paragraph style={{ color: '#eef2ff', maxWidth: 700, marginBottom: 0 }}>
+                                            List your gear, accept bookings, and earn from things you already own.
+                                        </Paragraph>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div>
-                                <div
-                                    style={{
-                                        height: 280,
-                                        borderRadius: 16,
-                                        background: 'linear-gradient(135deg, #394867, #5D79BB)',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        justifyContent: 'center',
-                                        alignItems: 'center',
-                                        color: '#fff',
-                                        textAlign: 'center',
-                                        padding: 24,
-                                    }}
-                                >
-                                    <Title level={2} style={{ color: '#fff', marginBottom: 8 }}>
-                                        Smarter renting for modern communities
-                                    </Title>
-                                    <Paragraph style={{ color: '#eef2ff', maxWidth: 700, marginBottom: 0 }}>
-                                        GearShare helps people access quality items without the cost of buying.
-                                    </Paragraph>
+                                <div>
+                                    <div
+                                        style={{
+                                            height: 280,
+                                            borderRadius: 16,
+                                            background: 'linear-gradient(135deg, #394867, #5D79BB)',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            color: '#fff',
+                                            textAlign: 'center',
+                                            padding: 24,
+                                        }}
+                                    >
+                                        <Title level={2} style={{ color: '#fff', marginBottom: 8 }}>
+                                            Smarter renting for modern communities
+                                        </Title>
+                                        <Paragraph style={{ color: '#eef2ff', maxWidth: 700, marginBottom: 0 }}>
+                                            GearShare helps people access quality items without the cost of buying.
+                                        </Paragraph>
+                                    </div>
                                 </div>
-                            </div>
-                        </Carousel>
+                            </Carousel>
+                        )}
                     </div>
 
                     {/* Categories */}
@@ -436,10 +510,14 @@ const Home = () => {
                         </Title>
 
                         <Row gutter={[20, 20]} justify="center">
-                            {categories.map((category) => (
-                                <Col xs={12} sm={8} md={6} lg={4} xl={4} key={category.title}>
+                            {(categories.length > 0
+                                ? categories.map((c) => ({ key: String(c.id), title: c.name, icon: c.hasIcon ? categoryIconUrl(c.id) : null }))
+                                : DEFAULT_CATEGORIES.map((c) => ({ key: c.title, title: c.title, icon: null as string | null, fallbackIcon: c.icon }))
+                            ).map((category: any) => (
+                                <Col xs={12} sm={8} md={6} lg={4} xl={4} key={category.key}>
                                     <Card
                                         hoverable
+                                        onClick={() => goToBrowse({ category: category.title })}
                                         style={{
                                             borderRadius: 18,
                                             borderColor: '#cfd8ea',
@@ -468,9 +546,14 @@ const Home = () => {
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
                                                 fontSize: 24,
+                                                overflow: 'hidden',
                                             }}
                                         >
-                                            {category.icon}
+                                            {category.icon ? (
+                                                <img src={category.icon} alt={category.title} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                            ) : (
+                                                category.fallbackIcon || <ToolOutlined />
+                                            )}
                                         </div>
                                         <Text style={{ fontWeight: 500, color: '#2B2E4A' }}>{category.title}</Text>
                                     </Card>
@@ -494,44 +577,50 @@ const Home = () => {
                             }}
                         >
                             <Row gutter={[24, 24]}>
-                                {trendingItems.map((item) => (
-                                    <Col xs={24} sm={12} md={8} key={item.title}>
-                                        <Card
-                                            hoverable
-                                            style={{
-                                                borderRadius: 18,
-                                                borderColor: '#d6def0',
-                                            }}
-                                        >
-                                            <div
-                                                style={{
-                                                    width: '100%',
-                                                    height: 150,
-                                                    borderRadius: 14,
-                                                    background: '#eef3fb',
-                                                    marginBottom: 16,
-                                                }}
-                                            />
+                                {trendingItems.length > 0
+                                    ? trendingItems.map((item) => (
+                                          <Col xs={24} sm={12} md={8} key={item.id}>
+                                              <Card
+                                                  hoverable
+                                                  onClick={() => navigate(`/renter/items/${item.id}`)}
+                                                  style={{ borderRadius: 18, borderColor: '#d6def0' }}
+                                              >
+                                                  {item.primaryImageId ? (
+                                                      <img
+                                                          src={itemImageUrl(item.id, item.primaryImageId)}
+                                                          alt={item.title}
+                                                          style={{ width: '100%', height: 150, objectFit: 'cover', borderRadius: 14, marginBottom: 16 }}
+                                                      />
+                                                  ) : (
+                                                      <div style={{ width: '100%', height: 150, borderRadius: 14, background: '#eef3fb', marginBottom: 16 }} />
+                                                  )}
 
-                                            <Text
-                                                style={{
-                                                    display: 'block',
-                                                    fontWeight: 600,
-                                                    color: '#2B2E4A',
-                                                    marginBottom: 4,
-                                                }}
-                                            >
-                                                {item.title}
-                                            </Text>
+                                                  <Text style={{ display: 'block', fontWeight: 600, color: '#2B2E4A', marginBottom: 4 }}>
+                                                      {item.title}
+                                                  </Text>
 
-                                            <Text style={{ display: 'block', color: '#2d7a46', marginBottom: 8 }}>
-                                                {item.booked}
-                                            </Text>
+                                                  <Text style={{ display: 'block', color: '#2d7a46', marginBottom: 8 }}>
+                                                      {item.featuredUntil ? 'Featured' : item.category || 'Available now'}
+                                                  </Text>
 
-                                            <Rate disabled defaultValue={3} style={{ fontSize: 14, color: '#2B2E4A' }} />
-                                        </Card>
-                                    </Col>
-                                ))}
+                                                  <Text strong style={{ color: '#2B2E4A' }}>
+                                                      {item.currency} {item.pricePerDay.toFixed(2)} / day
+                                                  </Text>
+                                              </Card>
+                                          </Col>
+                                      ))
+                                    : DEFAULT_TRENDING.map((item) => (
+                                          <Col xs={24} sm={12} md={8} key={item.title}>
+                                              <Card hoverable style={{ borderRadius: 18, borderColor: '#d6def0' }}>
+                                                  <div style={{ width: '100%', height: 150, borderRadius: 14, background: '#eef3fb', marginBottom: 16 }} />
+                                                  <Text style={{ display: 'block', fontWeight: 600, color: '#2B2E4A', marginBottom: 4 }}>
+                                                      {item.title}
+                                                  </Text>
+                                                  <Text style={{ display: 'block', color: '#2d7a46', marginBottom: 8 }}>{item.booked}</Text>
+                                                  <Rate disabled defaultValue={3} style={{ fontSize: 14, color: '#2B2E4A' }} />
+                                              </Card>
+                                          </Col>
+                                      ))}
                             </Row>
                         </div>
                     </div>

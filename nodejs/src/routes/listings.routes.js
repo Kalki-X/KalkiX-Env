@@ -27,6 +27,12 @@ const {
     deleteAvailabilityBlock,
 } = require('../models/itemAvailabilityModel');
 const { hasOverlap, listBookedDateRanges } = require('../models/bookingModel');
+const { getRawSettings } = require('../models/siteSettingsModel');
+const {
+    purchaseFeaturedSlot,
+    listFeaturedForOwner,
+    findActiveFeaturedForItem,
+} = require('../models/featuredListingModel');
 
 const router = express.Router();
 
@@ -411,6 +417,60 @@ router.delete('/:id/availability/:blockId', attachUser, requireAuth, requireCapa
     });
 
     res.json({ ok: true });
+});
+
+// ---------- Featured listings (homepage "Trending" monetization) ----------
+
+// A lender's own purchase history — shown on their listing management screen so they
+// can see what's currently active/expired without needing admin access.
+router.get('/mine/featured', attachUser, requireAuth, requireCapability('isLender'), async (req, res) => {
+    const featured = await listFeaturedForOwner(req.user.id);
+    res.json({ ok: true, featured });
+});
+
+// Simulated payment — matches how booking payments work today in this app (see
+// bookings.routes.js's /:id/confirm): no real payment gateway is wired up yet, this
+// just records a succeeded charge and starts the featured window immediately. Price is
+// admin-configurable (site_settings.featured_listing_price_per_day) so the fee can be
+// changed without a deploy.
+router.post('/:id/feature', attachUser, requireAuth, requireCapability('isLender'), async (req, res) => {
+    const owned = await loadOwnedItem(req, res);
+    if (!owned) return;
+
+    const days = Number(req.body?.days);
+    if (!Number.isInteger(days) || days < 1 || days > 90) {
+        return res.status(400).json({ ok: false, error: 'days must be an integer between 1 and 90' });
+    }
+
+    const existingSlot = await findActiveFeaturedForItem(owned.id);
+    if (existingSlot) {
+        return res.status(409).json({ ok: false, error: `This item is already featured until ${existingSlot.endsAt}` });
+    }
+
+    const settings = await getRawSettings();
+    const pricePerDay = Number(settings.featured_listing_price_per_day);
+    const currency = settings.featured_listing_currency;
+    const feeAmount = Math.round(pricePerDay * days * 100) / 100;
+
+    const featured = await purchaseFeaturedSlot({
+        itemId: owned.id,
+        purchasedBy: req.user.id,
+        days,
+        feeAmount,
+        currency,
+        providerRef: `sim_featured_${Date.now()}`,
+    });
+
+    await logAudit({
+        userId: req.user.id,
+        action: 'featured_listing.purchased',
+        entityType: 'item',
+        entityId: owned.id,
+        metadata: { days, feeAmount, currency, featuredListingId: featured.id },
+        ip: clientIp(req),
+    });
+
+    res.status(201).json({ ok: true, featured });
 });
 
 module.exports = router;

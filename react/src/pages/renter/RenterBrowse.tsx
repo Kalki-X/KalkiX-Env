@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Typography, Input, Select, Row, Col, Card, Space, Alert, Empty, Tag, Spin } from "antd";
 import { InboxOutlined } from "@ant-design/icons";
 import { Item, listActiveItems, itemImageUrl } from "../../features/listings/api/listingsApi";
-import { ITEM_CATEGORIES } from "../../features/listings/constants";
+import { getPublicCategories } from "../../features/siteContent/api/siteContentApi";
 import { getApiErrorMessage } from "../../services/api/client";
 
 const { Title, Paragraph, Text } = Typography;
@@ -14,8 +14,15 @@ export default function RenterBrowse() {
     const [items, setItems] = useState<Item[]>([]);
     const [search, setSearch] = useState("");
     const [category, setCategory] = useState<string | undefined>(undefined);
+    const [categories, setCategories] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    useEffect(() => {
+        getPublicCategories()
+            .then((cats) => setCategories(cats.map((c) => c.name)))
+            .catch(() => {});
+    }, []);
 
     const load = async (searchValue = search, categoryValue = category) => {
         setLoading(true);
@@ -61,7 +68,7 @@ export default function RenterBrowse() {
                     value={category}
                     onChange={(v) => setCategory(v)}
                 >
-                    {ITEM_CATEGORIES.map((c) => (
+                    {categories.map((c) => (
                         <Option key={c} value={c}>
                             {c}
                         </Option>

@@ -21,6 +21,7 @@ const {
 const { createDocument, listDocumentsForBooking, voidDocumentsForBooking } = require('../models/documentModel');
 const { hasAvailabilityBlockOverlap } = require('../models/itemAvailabilityModel');
 const { createNotification } = require('../models/notificationModel');
+const { getRawSettings } = require('../models/siteSettingsModel');
 
 const router = express.Router();
 const REACT_URL = process.env.REACT_URL || 'http://localhost:5173';
@@ -336,13 +337,25 @@ router.post('/:id/confirm', attachUser, requireAuth, async (req, res) => {
 
     const ip = clientIp(req);
 
+    // The renter is charged exactly the listed total either way — the platform fee is
+    // deducted from what the lender is owed, never added on top of what the renter
+    // pays. Snapshotting the computed fee/payout onto the payment row itself (rather
+    // than recomputing from the site-wide setting later) means a later change to the
+    // fee percent never retroactively alters a payment that already happened — same
+    // precedent as the cancellation-policy snapshot on bookings.
+    const settings = await getRawSettings();
+    const feePercent = Number(settings.platform_fee_percent) || 0;
+    const totalAmount = Number(booking.total_amount);
+    const platformFeeAmount = Math.round(totalAmount * feePercent) / 100;
+    const payoutAmount = Math.round((totalAmount - platformFeeAmount) * 100) / 100;
+
     try {
         await pool.query('BEGIN');
 
         await pool.query(
-            `INSERT INTO payments (booking_id, amount, currency, method, status, provider_ref)
-             VALUES ($1, $2, $3, $4, 'succeeded', $5)`,
-            [booking.id, booking.total_amount, booking.currency, req.body?.method || 'card', `sim_${Date.now()}`]
+            `INSERT INTO payments (booking_id, amount, currency, method, status, provider_ref, platform_fee_amount, payout_amount)
+             VALUES ($1, $2, $3, $4, 'succeeded', $5, $6, $7)`,
+            [booking.id, booking.total_amount, booking.currency, req.body?.method || 'card', `sim_${Date.now()}`, platformFeeAmount, payoutAmount]
         );
 
         const updated = await setBookingStatus(booking.id, 'confirmed');
@@ -357,7 +370,14 @@ router.post('/:id/confirm', attachUser, requireAuth, async (req, res) => {
 
         await pool.query('COMMIT');
 
-        await logAudit({ userId: req.user.id, action: 'payment.succeeded', entityType: 'booking', entityId: booking.id, metadata: { amount: booking.total_amount }, ip });
+        await logAudit({
+            userId: req.user.id,
+            action: 'payment.succeeded',
+            entityType: 'booking',
+            entityId: booking.id,
+            metadata: { amount: booking.total_amount, platformFeeAmount, payoutAmount, platformFeePercent: feePercent },
+            ip,
+        });
         await logAudit({ userId: req.user.id, action: 'booking.confirmed', entityType: 'booking', entityId: booking.id, ip });
         await logAudit({ userId: req.user.id, action: 'document.generated', entityType: 'document', entityId: invoice.id, metadata: { type: invoice.type, documentNumber: invoice.documentNumber }, ip });
 

@@ -9,6 +9,11 @@ function toPublicPayment(row) {
         method: row.method,
         status: row.status,
         providerRef: row.provider_ref,
+        // The platform's cut of this payment and what's left over for the lender's
+        // payout. Both null on payments made before Phase 9 (fee tracking wasn't
+        // recorded yet) — the frontend shows those as "not tracked" rather than $0.
+        platformFeeAmount: row.platform_fee_amount !== null && row.platform_fee_amount !== undefined ? Number(row.platform_fee_amount) : null,
+        payoutAmount: row.payout_amount !== null && row.payout_amount !== undefined ? Number(row.payout_amount) : null,
         createdAt: row.created_at,
         item: row.item_title ? { id: row.item_id, title: row.item_title } : null,
         renter: row.renter_email

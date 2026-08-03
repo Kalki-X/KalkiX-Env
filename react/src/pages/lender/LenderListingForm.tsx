@@ -23,7 +23,8 @@ import {
     createItem,
     updateItem,
 } from "../../features/listings/api/listingsApi";
-import { ITEM_CATEGORIES, CURRENCIES } from "../../features/listings/constants";
+import { CURRENCIES } from "../../features/listings/constants";
+import { getPublicCategories } from "../../features/siteContent/api/siteContentApi";
 import { getApiErrorMessage } from "../../services/api/client";
 import ItemImageManager from "../../components/ItemImageManager/ItemImageManager";
 import ItemAvailabilityManager from "../../components/ItemAvailabilityManager/ItemAvailabilityManager";
@@ -59,6 +60,15 @@ export default function LenderListingForm() {
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [pin, setPin] = useState<{ lat: number | null; lng: number | null }>({ lat: null, lng: null });
     const [policyEnabled, setPolicyEnabled] = useState(false);
+    const [categories, setCategories] = useState<string[]>([]);
+
+    // Categories are admin-managed now (see Super Admin > Homepage > Categories)
+    // instead of a hardcoded list, so a newly-added one shows up here immediately.
+    useEffect(() => {
+        getPublicCategories()
+            .then((cats) => setCategories(cats.map((c) => c.name)))
+            .catch(() => {}); // non-critical — the select just shows no options if this fails
+    }, []);
 
     useEffect(() => {
         if (!isEdit) return;
@@ -172,7 +182,7 @@ export default function LenderListingForm() {
                     <Space size="large" style={{ display: "flex" }} wrap>
                         <Form.Item label="Category" name="category" style={{ minWidth: 220 }}>
                             <Select placeholder="Select a category" allowClear>
-                                {ITEM_CATEGORIES.map((c) => (
+                                {categories.map((c) => (
                                     <Option key={c} value={c}>
                                         {c}
                                     </Option>

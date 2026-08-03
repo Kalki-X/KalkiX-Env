@@ -57,6 +57,8 @@ export default function PaymentManagement() {
         { header: 'Item', accessor: (p) => p.item?.title ?? '' },
         { header: 'Renter', accessor: (p) => (p.renter ? `${p.renter.name} (${p.renter.email})` : '') },
         { header: 'Amount', accessor: (p) => `${p.currency} ${p.amount.toFixed(2)}` },
+        { header: 'Platform fee', accessor: (p) => (p.platformFeeAmount !== null ? p.platformFeeAmount.toFixed(2) : '') },
+        { header: 'Lender payout', accessor: (p) => (p.payoutAmount !== null ? p.payoutAmount.toFixed(2) : '') },
         { header: 'Method', accessor: (p) => p.method || '' },
         { header: 'Status', accessor: (p) => p.status },
     ];
@@ -146,6 +148,16 @@ export default function PaymentManagement() {
                         title: 'Amount',
                         key: 'amount',
                         render: (_, p) => `${p.currency} ${p.amount.toFixed(2)}`,
+                    },
+                    {
+                        title: 'Platform fee',
+                        key: 'platformFee',
+                        render: (_, p) => (p.platformFeeAmount !== null ? `${p.currency} ${p.platformFeeAmount.toFixed(2)}` : '—'),
+                    },
+                    {
+                        title: 'Lender payout',
+                        key: 'payout',
+                        render: (_, p) => (p.payoutAmount !== null ? `${p.currency} ${p.payoutAmount.toFixed(2)}` : '—'),
                     },
                     { title: 'Method', dataIndex: 'method', render: (v: string | null) => v || '—' },
                     {
