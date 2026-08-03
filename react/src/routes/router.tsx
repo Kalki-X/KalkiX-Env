@@ -23,6 +23,9 @@ import LenderListings from "../pages/lender/LenderListings";
 import LenderListingForm from "../pages/lender/LenderListingForm";
 import LenderBookings from "../pages/lender/LenderBookings";
 import RenterDashboard from "../pages/renter/RenterDashboard";
+import RenterBrowse from "../pages/renter/RenterBrowse";
+import ItemDetail from "../pages/renter/ItemDetail";
+import RenterBookings from "../pages/renter/RenterBookings";
 
 const FINANCE_NAV_ITEMS: DashboardNavItem[] = [
     { key: "overview", label: "Overview", path: "/finance" },
@@ -42,6 +45,12 @@ const LENDER_NAV_ITEMS: DashboardNavItem[] = [
     { key: "overview", label: "Overview", path: "/lender" },
     { key: "listings", label: "My Listings", path: "/lender/listings" },
     { key: "bookings", label: "Bookings", path: "/lender/bookings" },
+];
+
+const RENTER_NAV_ITEMS: DashboardNavItem[] = [
+    { key: "overview", label: "Overview", path: "/renter" },
+    { key: "browse", label: "Browse", path: "/renter/browse" },
+    { key: "bookings", label: "My Bookings", path: "/renter/bookings" },
 ];
 
 const ADMIN_NAV_ITEMS: DashboardNavItem[] = [
@@ -167,8 +176,13 @@ export const router = createBrowserRouter([
         element: <ProtectedRoute capability="isRenter" />,
         children: [
             {
-                element: <DashboardLayout title="Renter" />,
-                children: [{ index: true, element: <RenterDashboard /> }],
+                element: <DashboardLayout title="Renter" navItems={RENTER_NAV_ITEMS} />,
+                children: [
+                    { index: true, element: <RenterDashboard /> },
+                    { path: "browse", element: <RenterBrowse /> },
+                    { path: "items/:id", element: <ItemDetail /> },
+                    { path: "bookings", element: <RenterBookings /> },
+                ],
             },
         ],
     },
