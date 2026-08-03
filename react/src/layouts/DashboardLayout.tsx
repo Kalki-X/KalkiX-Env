@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
 import { Layout, Space, Tag, Typography, Button, Avatar, Menu, Grid, Drawer } from "antd";
-import { LogoutOutlined, ShopOutlined, UserOutlined, MenuOutlined } from "@ant-design/icons";
+import { LogoutOutlined, ShopOutlined, UserOutlined, MenuOutlined, DashboardOutlined } from "@ant-design/icons";
 import { useAuth } from "../features/auth/context/AuthContext";
 import { userAvatarUrl } from "../features/auth/api/authApi";
+import { resolveHomeRoute } from "../features/auth/utils/resolveHomeRoute";
 
 export interface DashboardNavItem {
     key: string;
@@ -59,6 +60,11 @@ export default function DashboardLayout({ title, navItems }: { title: string; na
 
     const showRoleSwitcher = user?.role === "platform_user" && user.isRenter && user.isLender;
     const selectedNavKey = navItems?.find((item) => item.path === location.pathname)?.key ?? navItems?.[0]?.key;
+    // Every page under DashboardLayout needs an obvious way back to the user's own
+    // dashboard — pages with no navItems (like /profile) or several hops deep (like
+    // editing a single listing) previously only offered "View marketplace", which
+    // isn't the same thing and left people stuck.
+    const homeRoute = user ? resolveHomeRoute(user) : "/";
 
     const identity = user && (
         <Space
@@ -120,6 +126,10 @@ export default function DashboardLayout({ title, navItems }: { title: string; na
                             </Space.Compact>
                         )}
 
+                        <Button type="text" icon={<DashboardOutlined />} onClick={() => goTo(homeRoute)}>
+                            Dashboard
+                        </Button>
+
                         <Button type="text" icon={<ShopOutlined />} onClick={() => goTo("/")}>
                             View marketplace
                         </Button>
@@ -180,6 +190,9 @@ export default function DashboardLayout({ title, navItems }: { title: string; na
 
                     <div style={{ borderTop: "1px solid #eef2f7", paddingTop: 12 }}>
                         <Space direction="vertical" size="small" style={{ width: "100%" }}>
+                            <Button block type="text" style={{ textAlign: "left" }} icon={<DashboardOutlined />} onClick={() => goTo(homeRoute)}>
+                                Dashboard
+                            </Button>
                             <Button block type="text" style={{ textAlign: "left" }} icon={<ShopOutlined />} onClick={() => goTo("/")}>
                                 View marketplace
                             </Button>

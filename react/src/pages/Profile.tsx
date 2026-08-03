@@ -1,9 +1,11 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Typography, Card, Form, Input, Button, Avatar, Space, Upload, message, Alert } from "antd";
-import { UserOutlined, SaveOutlined, CameraOutlined } from "@ant-design/icons";
+import { UserOutlined, SaveOutlined, CameraOutlined, ArrowLeftOutlined } from "@ant-design/icons";
 import type { UploadRequestOption } from "@rc-component/upload/lib/interface";
 import { useAuth } from "../features/auth/context/AuthContext";
 import { updateProfile, uploadAvatar, userAvatarUrl } from "../features/auth/api/authApi";
+import { resolveHomeRoute } from "../features/auth/utils/resolveHomeRoute";
 import { getApiErrorMessage } from "../services/api/client";
 
 const { Title, Paragraph } = Typography;
@@ -15,6 +17,7 @@ const { Title, Paragraph } = Typography;
 // and role/status/capabilities stay Super Admin/staff-only.
 export default function Profile() {
     const { user, refresh } = useAuth();
+    const navigate = useNavigate();
     const [form] = Form.useForm<{ phone?: string }>();
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -55,6 +58,14 @@ export default function Profile() {
     return (
         <Space direction="vertical" size="large" style={{ width: "100%", maxWidth: 560 }}>
             <div>
+                <Button
+                    type="link"
+                    icon={<ArrowLeftOutlined />}
+                    onClick={() => navigate(resolveHomeRoute(user))}
+                    style={{ paddingLeft: 0, marginBottom: 4 }}
+                >
+                    Back to dashboard
+                </Button>
                 <Title level={2} style={{ color: "#2B2E4A", marginBottom: 4 }}>
                     My profile
                 </Title>

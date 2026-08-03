@@ -14,7 +14,7 @@ import {
     Divider,
     message,
 } from "antd";
-import { EnvironmentOutlined, SaveOutlined } from "@ant-design/icons";
+import { EnvironmentOutlined, SaveOutlined, ArrowLeftOutlined } from "@ant-design/icons";
 import {
     Item,
     ItemFormPayload,
@@ -129,6 +129,14 @@ export default function LenderListingForm() {
     return (
         <Space direction="vertical" size="large" style={{ width: "100%" }}>
             <div>
+                <Button
+                    type="link"
+                    icon={<ArrowLeftOutlined />}
+                    onClick={() => navigate("/lender/listings")}
+                    style={{ paddingLeft: 0, marginBottom: 4 }}
+                >
+                    Back to my listings
+                </Button>
                 <Title level={2} style={{ color: "#2B2E4A", marginBottom: 4 }}>
                     {isEdit ? `Edit "${item?.title ?? ""}"` : "Add a listing"}
                 </Title>
