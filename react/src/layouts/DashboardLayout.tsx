@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
 import { Layout, Space, Tag, Typography, Button, Avatar, Menu, Grid, Drawer } from "antd";
-import { LogoutOutlined, ShopOutlined, UserOutlined, MenuOutlined, DashboardOutlined } from "@ant-design/icons";
+import { LogoutOutlined, ShopOutlined, UserOutlined, MenuOutlined, DashboardOutlined, ArrowLeftOutlined } from "@ant-design/icons";
 import { useAuth } from "../features/auth/context/AuthContext";
 import { userAvatarUrl } from "../features/auth/api/authApi";
 import { resolveHomeRoute } from "../features/auth/utils/resolveHomeRoute";
@@ -65,6 +65,12 @@ export default function DashboardLayout({ title, navItems }: { title: string; na
     // editing a single listing) previously only offered "View marketplace", which
     // isn't the same thing and left people stuck.
     const homeRoute = user ? resolveHomeRoute(user) : "/";
+    // Same idea, one level down: any sub-page under a role's section nav (Super Admin's
+    // User Management, Audit Trail, Sales Reports, etc.) gets an explicit "back to
+    // overview" link automatically, instead of relying on people noticing the section
+    // nav bar is also clickable.
+    const overviewItem = navItems?.[0];
+    const onOverviewPage = overviewItem && location.pathname === overviewItem.path;
 
     const identity = user && (
         <Space
@@ -206,6 +212,16 @@ export default function DashboardLayout({ title, navItems }: { title: string; na
 
             <Content style={{ padding: isMobileOrTablet ? 16 : 32 }}>
                 <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+                    {overviewItem && !onOverviewPage && (
+                        <Button
+                            type="link"
+                            icon={<ArrowLeftOutlined />}
+                            onClick={() => goTo(overviewItem.path)}
+                            style={{ paddingLeft: 0, marginBottom: 8 }}
+                        >
+                            Back to {overviewItem.label}
+                        </Button>
+                    )}
                     <Outlet />
                 </div>
             </Content>
