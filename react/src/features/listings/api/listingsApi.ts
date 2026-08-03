@@ -14,6 +14,10 @@ export interface Item {
     pickupAddress: string | null;
     pickupLat: number | null;
     pickupLng: number | null;
+    // Optional cancellation policy: free cancellation up to N days before the rental
+    // starts, then a flat fee % applies. Both null means no policy set.
+    cancellationFreeDays: number | null;
+    cancellationFeePercent: number | null;
     primaryImageId: number | null;
     createdAt: string;
     updatedAt: string;
@@ -55,6 +59,10 @@ export interface ItemFormPayload {
     pickupAddress?: string;
     pickupLat?: number;
     pickupLng?: number;
+    // Both must be set together (or both left out/null to clear the policy) — enforced
+    // server-side too.
+    cancellationFreeDays?: number | null;
+    cancellationFeePercent?: number | null;
 }
 
 // ---------- Browse (public) ----------

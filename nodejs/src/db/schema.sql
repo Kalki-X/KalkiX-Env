@@ -174,3 +174,46 @@ CREATE INDEX IF NOT EXISTS idx_item_availability_item ON item_availability_block
 -- nullable columns on the row rather than a separate table.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_mime_type TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_data BYTEA;
+
+-- Phase 6: booking approval workflow. A renter's request no longer jumps straight to
+-- "pending" (implicitly awaiting payment) — it now needs an explicit lender decision
+-- first: 'pending_approval' -> 'awaiting_payment' (approved, proforma issued, renter can
+-- pay) or 'rejected' (mandatory reason, terminal). 'confirmed'/'cancelled'/'completed'
+-- are unchanged. Existing rows from before this migration are 'pending', which no
+-- longer satisfies the CHECK below — remap them to 'awaiting_payment' first (they
+-- already had a proforma issued under the old flow, matching that status's meaning)
+-- before swapping the constraint, so this stays safe to run against a live database.
+UPDATE bookings SET status = 'awaiting_payment' WHERE status = 'pending';
+ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_status_check;
+ALTER TABLE bookings ADD CONSTRAINT bookings_status_check
+    CHECK (status IN ('pending_approval', 'awaiting_payment', 'rejected', 'confirmed', 'cancelled', 'completed'));
+
+-- Optional note the renter can attach to a request (special instructions, etc.), visible
+-- to the lender before they approve/reject. Reason is mandatory in the API layer when
+-- rejecting, but the column itself stays nullable (only rejected bookings have one).
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS renter_note TEXT;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS rejection_reason TEXT;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS decided_at TIMESTAMPTZ;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS decided_by BIGINT REFERENCES users(id) ON DELETE SET NULL;
+
+-- The item's cancellation policy is snapshotted onto the booking at request time (both
+-- null if the lender hadn't set one) so a lender editing their policy later never
+-- retroactively changes the refund terms of a booking that already exists under the old
+-- terms.
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS cancellation_free_days INTEGER;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS cancellation_fee_percent NUMERIC(5, 2);
+
+-- Lender-defined cancellation policy on the listing itself. Both optional/nullable —
+-- when unset, cancelling a paid booking falls back to the original behavior (a full
+-- refund/credit note, no fee), so this is purely additive for existing listings.
+ALTER TABLE items ADD COLUMN IF NOT EXISTS cancellation_free_days INTEGER
+    CHECK (cancellation_free_days IS NULL OR cancellation_free_days >= 0);
+ALTER TABLE items ADD COLUMN IF NOT EXISTS cancellation_fee_percent NUMERIC(5, 2)
+    CHECK (cancellation_fee_percent IS NULL OR (cancellation_fee_percent >= 0 AND cancellation_fee_percent <= 100));
+
+-- A voided document (superseded by a credit note when a paid booking is cancelled) stays
+-- in the audit trail forever — nothing is ever deleted — but is hidden from the renter's
+-- and lender's own document lists; only Admin/Super Admin/Finance (via Document Lookup)
+-- can still see it, which is why this is a flag rather than a delete.
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS voided BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS voided_at TIMESTAMPTZ;

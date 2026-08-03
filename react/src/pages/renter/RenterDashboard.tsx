@@ -22,7 +22,8 @@ export default function RenterDashboard() {
             .catch((err) => setErrorMessage(getApiErrorMessage(err, "Could not load your dashboard.")));
     }, []);
 
-    const pendingCount = bookings?.filter((b) => b.status === "pending").length ?? 0;
+    const pendingApprovalCount = bookings?.filter((b) => b.status === "pending_approval").length ?? 0;
+    const awaitingPaymentCount = bookings?.filter((b) => b.status === "awaiting_payment").length ?? 0;
     const confirmedCount = bookings?.filter((b) => b.status === "confirmed").length ?? 0;
 
     return (
@@ -40,12 +41,17 @@ export default function RenterDashboard() {
 
             {bookings ? (
                 <Row gutter={[16, 16]}>
-                    <Col xs={24} sm={12}>
+                    <Col xs={24} sm={8}>
                         <Card>
-                            <Statistic title="Awaiting payment" value={pendingCount} />
+                            <Statistic title="Awaiting lender approval" value={pendingApprovalCount} />
                         </Card>
                     </Col>
-                    <Col xs={24} sm={12}>
+                    <Col xs={24} sm={8}>
+                        <Card>
+                            <Statistic title="Awaiting payment" value={awaitingPaymentCount} />
+                        </Card>
+                    </Col>
+                    <Col xs={24} sm={8}>
                         <Card>
                             <Statistic title="Confirmed bookings" value={confirmedCount} />
                         </Card>

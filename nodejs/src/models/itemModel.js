@@ -14,6 +14,11 @@ function toPublicItem(row) {
         pickupAddress: row.pickup_address,
         pickupLat: row.pickup_lat !== null && row.pickup_lat !== undefined ? Number(row.pickup_lat) : null,
         pickupLng: row.pickup_lng !== null && row.pickup_lng !== undefined ? Number(row.pickup_lng) : null,
+        // Optional cancellation policy: "free cancellation up to N days before the rental
+        // starts, then a flat fee % applies". Both null means no policy set — cancelling
+        // a paid booking on this item always issues a full-amount credit note.
+        cancellationFreeDays: row.cancellation_free_days !== null && row.cancellation_free_days !== undefined ? Number(row.cancellation_free_days) : null,
+        cancellationFeePercent: row.cancellation_fee_percent !== null && row.cancellation_fee_percent !== undefined ? Number(row.cancellation_fee_percent) : null,
         // Only populated by queries that join it in (list/detail below); normalized to
         // null (rather than left undefined) for rows from plain RETURNING * queries
         // (create/update/status-change) so the shape is always consistent for the
@@ -78,12 +83,36 @@ async function findPublicItemById(id) {
     return toPublicItem(rows[0]);
 }
 
-async function createItem({ ownerId, title, description, category, pricePerDay, currency = 'USD', pickupAddress, pickupLat, pickupLng }) {
+async function createItem({
+    ownerId,
+    title,
+    description,
+    category,
+    pricePerDay,
+    currency = 'USD',
+    pickupAddress,
+    pickupLat,
+    pickupLng,
+    cancellationFreeDays,
+    cancellationFeePercent,
+}) {
     const { rows } = await pool.query(
-        `INSERT INTO items (owner_id, title, description, category, price_per_day, currency, status, pickup_address, pickup_lat, pickup_lng)
-         VALUES ($1, $2, $3, $4, $5, $6, 'active', $7, $8, $9)
+        `INSERT INTO items (owner_id, title, description, category, price_per_day, currency, status, pickup_address, pickup_lat, pickup_lng, cancellation_free_days, cancellation_fee_percent)
+         VALUES ($1, $2, $3, $4, $5, $6, 'active', $7, $8, $9, $10, $11)
          RETURNING *`,
-        [ownerId, title, description || null, category || null, pricePerDay, currency, pickupAddress || null, pickupLat ?? null, pickupLng ?? null]
+        [
+            ownerId,
+            title,
+            description || null,
+            category || null,
+            pricePerDay,
+            currency,
+            pickupAddress || null,
+            pickupLat ?? null,
+            pickupLng ?? null,
+            cancellationFreeDays ?? null,
+            cancellationFeePercent ?? null,
+        ]
     );
     return toPublicItem(rows[0]);
 }
@@ -110,6 +139,8 @@ async function updateItemFields(id, ownerId, fields) {
         pickupAddress: 'pickup_address',
         pickupLat: 'pickup_lat',
         pickupLng: 'pickup_lng',
+        cancellationFreeDays: 'cancellation_free_days',
+        cancellationFeePercent: 'cancellation_fee_percent',
     };
     const sets = [];
     const params = [];

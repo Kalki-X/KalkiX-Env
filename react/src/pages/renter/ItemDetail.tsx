@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Typography, Card, Image, Space, Tag, Button, DatePicker, Alert, Spin, Row, Col, message } from "antd";
-import { EnvironmentOutlined, ArrowLeftOutlined } from "@ant-design/icons";
+import { Typography, Card, Image, Space, Tag, Button, DatePicker, Input, Alert, Spin, Row, Col, message } from "antd";
+import { EnvironmentOutlined, ArrowLeftOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import dayjs, { Dayjs } from "dayjs";
 import {
     Item,
@@ -17,6 +17,7 @@ import { getApiErrorMessage } from "../../services/api/client";
 
 const { Title, Paragraph, Text } = Typography;
 const { RangePicker } = DatePicker;
+const { TextArea } = Input;
 
 // Leaflet only needs to load for pages that actually render a map — see the identical
 // note on the Lender listing form.
@@ -38,6 +39,7 @@ export default function ItemDetail() {
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const [range, setRange] = useState<[Dayjs, Dayjs] | null>(null);
+    const [note, setNote] = useState("");
     const [booking, setBooking] = useState(false);
     const [bookingError, setBookingError] = useState<string | null>(null);
 
@@ -86,8 +88,9 @@ export default function ItemDetail() {
                 itemId,
                 startDate: start.format("YYYY-MM-DD"),
                 endDate: end.format("YYYY-MM-DD"),
+                note: note.trim() || undefined,
             });
-            message.success("Booking requested — head to My Bookings to complete payment.");
+            message.success("Booking requested — the lender will approve or decline it shortly.");
             navigate("/renter/bookings");
         } catch (err) {
             setBookingError(getApiErrorMessage(err, "Could not create this booking."));
@@ -210,12 +213,34 @@ export default function ItemDetail() {
                                 </Space>
                             )}
 
+                            <div>
+                                <Text style={{ display: "block", marginBottom: 8 }}>Note to the lender (optional)</Text>
+                                <TextArea
+                                    rows={2}
+                                    placeholder="Anything the lender should know — pickup time, special instructions..."
+                                    value={note}
+                                    onChange={(e) => setNote(e.target.value)}
+                                    maxLength={500}
+                                />
+                            </div>
+
                             <Button type="primary" size="large" block loading={booking} disabled={!range} onClick={onBook}>
                                 Request booking
                             </Button>
                             <Text style={{ color: "#94a3b8", fontSize: 12 }}>
-                                A proforma invoice is issued immediately. You'll pay from My Bookings to confirm.
+                                The lender needs to approve your request before you can pay. You'll be notified either
+                                way, and a proforma invoice will be ready in My Bookings once approved.
                             </Text>
+
+                            {item.cancellationFreeDays !== null && item.cancellationFeePercent !== null && (
+                                <Alert
+                                    type="info"
+                                    showIcon
+                                    icon={<InfoCircleOutlined />}
+                                    message="Cancellation policy"
+                                    description={`Free cancellation up to ${item.cancellationFreeDays} day${item.cancellationFreeDays === 1 ? "" : "s"} before the rental starts. After that, a ${item.cancellationFeePercent}% fee applies if you cancel a paid booking.`}
+                                />
+                            )}
                         </Space>
                     </Card>
                 </Col>

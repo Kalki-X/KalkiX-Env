@@ -12,6 +12,7 @@ import {
     Alert,
     Spin,
     Divider,
+    Switch,
     message,
 } from "antd";
 import { EnvironmentOutlined, SaveOutlined, ArrowLeftOutlined } from "@ant-design/icons";
@@ -42,6 +43,8 @@ interface FormValues {
     pricePerDay: number;
     currency: string;
     pickupAddress?: string;
+    cancellationFreeDays?: number;
+    cancellationFeePercent?: number;
 }
 
 export default function LenderListingForm() {
@@ -55,6 +58,7 @@ export default function LenderListingForm() {
     const [saving, setSaving] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [pin, setPin] = useState<{ lat: number | null; lng: number | null }>({ lat: null, lng: null });
+    const [policyEnabled, setPolicyEnabled] = useState(false);
 
     useEffect(() => {
         if (!isEdit) return;
@@ -63,6 +67,8 @@ export default function LenderListingForm() {
             .then((loaded) => {
                 setItem(loaded);
                 setPin({ lat: loaded.pickupLat, lng: loaded.pickupLng });
+                const hasPolicy = loaded.cancellationFreeDays !== null && loaded.cancellationFeePercent !== null;
+                setPolicyEnabled(hasPolicy);
                 form.setFieldsValue({
                     title: loaded.title,
                     description: loaded.description || undefined,
@@ -70,6 +76,8 @@ export default function LenderListingForm() {
                     pricePerDay: loaded.pricePerDay,
                     currency: loaded.currency,
                     pickupAddress: loaded.pickupAddress || undefined,
+                    cancellationFreeDays: loaded.cancellationFreeDays ?? undefined,
+                    cancellationFeePercent: loaded.cancellationFeePercent ?? undefined,
                 });
             })
             .catch((err) => setErrorMessage(getApiErrorMessage(err, "Could not load this listing.")))
@@ -100,6 +108,10 @@ export default function LenderListingForm() {
             pickupAddress: values.pickupAddress,
             pickupLat: pin.lat ?? undefined,
             pickupLng: pin.lng ?? undefined,
+            // Explicit null (not undefined) when the toggle is off, so an edit actually
+            // clears a previously-set policy instead of leaving it untouched.
+            cancellationFreeDays: policyEnabled ? values.cancellationFreeDays : null,
+            cancellationFeePercent: policyEnabled ? values.cancellationFeePercent : null,
         };
         try {
             if (isEdit) {
@@ -202,6 +214,44 @@ export default function LenderListingForm() {
                                 <Button size="small" type="link" onClick={() => setPin({ lat: null, lng: null })}>
                                     Clear pin
                                 </Button>
+                            )}
+                        </Space>
+                    </Form.Item>
+
+                    <Divider />
+
+                    <Form.Item label="Cancellation policy (optional)">
+                        <Space direction="vertical" style={{ width: "100%" }}>
+                            <Switch
+                                checked={policyEnabled}
+                                onChange={setPolicyEnabled}
+                                checkedChildren="Policy set"
+                                unCheckedChildren="No policy"
+                            />
+                            {!policyEnabled && (
+                                <Paragraph style={{ color: "#94a3b8", fontSize: 13, marginBottom: 0 }}>
+                                    Without a policy, cancelling a paid booking always issues a full refund (credit note).
+                                </Paragraph>
+                            )}
+                            {policyEnabled && (
+                                <Space size="large" wrap>
+                                    <Form.Item
+                                        label="Free cancellation up to (days before start)"
+                                        name="cancellationFreeDays"
+                                        rules={[{ required: policyEnabled, message: "Required when a policy is set" }]}
+                                        style={{ marginBottom: 0 }}
+                                    >
+                                        <InputNumber min={0} precision={0} style={{ width: 140 }} />
+                                    </Form.Item>
+                                    <Form.Item
+                                        label="Fee after that (%)"
+                                        name="cancellationFeePercent"
+                                        rules={[{ required: policyEnabled, message: "Required when a policy is set" }]}
+                                        style={{ marginBottom: 0 }}
+                                    >
+                                        <InputNumber min={0} max={100} precision={2} style={{ width: 140 }} />
+                                    </Form.Item>
+                                </Space>
                             )}
                         </Space>
                     </Form.Item>

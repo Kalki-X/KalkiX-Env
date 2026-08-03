@@ -13,14 +13,25 @@ import {
 } from "../../features/bookings/api/bookingsApi";
 import { getApiErrorMessage } from "../../services/api/client";
 
-const { Title, Paragraph } = Typography;
+const { Title, Paragraph, Text } = Typography;
 const { Option } = Select;
 
 const STATUS_COLOR: Record<BookingStatus, string> = {
-    pending: "default",
+    pending_approval: "gold",
+    awaiting_payment: "blue",
+    rejected: "default",
     confirmed: "success",
     cancelled: "error",
     completed: "processing",
+};
+
+const STATUS_LABEL: Record<BookingStatus, string> = {
+    pending_approval: "Awaiting lender approval",
+    awaiting_payment: "Approved — payment due",
+    rejected: "Rejected",
+    confirmed: "Confirmed",
+    cancelled: "Cancelled",
+    completed: "Completed",
 };
 
 const DOC_LABEL: Record<BookingDocument["type"], string> = {
@@ -106,7 +117,7 @@ export default function RenterBookings() {
                     My bookings
                 </Title>
                 <Paragraph style={{ color: "#64748b" }}>
-                    Track your rental requests, pay to confirm, and access your documents.
+                    Track your rental requests, pay once approved, and access your documents.
                 </Paragraph>
             </div>
 
@@ -126,18 +137,29 @@ export default function RenterBookings() {
                         render: (_, b) => `${dayjs(b.startDate).format("DD MMM YYYY")} – ${dayjs(b.endDate).format("DD MMM YYYY")}`,
                     },
                     { title: "Amount", key: "amount", render: (_, b) => `${b.currency} ${b.totalAmount.toFixed(2)}` },
-                    { title: "Status", dataIndex: "status", render: (s: BookingStatus) => <Tag color={STATUS_COLOR[s]}>{s}</Tag> },
+                    {
+                        title: "Status",
+                        key: "status",
+                        render: (_, b) => (
+                            <Space direction="vertical" size={0}>
+                                <Tag color={STATUS_COLOR[b.status]}>{STATUS_LABEL[b.status]}</Tag>
+                                {b.status === "rejected" && b.rejectionReason && (
+                                    <Text style={{ fontSize: 12, color: "#94a3b8" }}>Reason: {b.rejectionReason}</Text>
+                                )}
+                            </Space>
+                        ),
+                    },
                     {
                         title: "",
                         key: "actions",
                         render: (_, b) => (
                             <Space wrap>
-                                {b.status === "pending" && (
+                                {b.status === "awaiting_payment" && (
                                     <Button size="small" type="primary" onClick={() => setPayingBooking(b)}>
                                         Pay
                                     </Button>
                                 )}
-                                {["pending", "confirmed"].includes(b.status) && (
+                                {["pending_approval", "awaiting_payment", "confirmed"].includes(b.status) && (
                                     <Popconfirm
                                         title="Cancel this booking?"
                                         description={b.status === "confirmed" ? "A credit note will be issued since it was already paid." : undefined}

@@ -28,7 +28,7 @@ export default function LenderDashboard() {
     }, []);
 
     const activeCount = items?.filter((i) => i.status === "active").length ?? 0;
-    const pendingCount = bookings?.filter((b) => b.status === "pending").length ?? 0;
+    const pendingApprovalCount = bookings?.filter((b) => b.status === "pending_approval").length ?? 0;
     const confirmedCount = bookings?.filter((b) => b.status === "confirmed").length ?? 0;
 
     return (
@@ -53,7 +53,7 @@ export default function LenderDashboard() {
                     </Col>
                     <Col xs={24} sm={8}>
                         <Card>
-                            <Statistic title="Pending bookings" value={pendingCount} />
+                            <Statistic title="Awaiting your decision" value={pendingApprovalCount} />
                         </Card>
                     </Col>
                     <Col xs={24} sm={8}>

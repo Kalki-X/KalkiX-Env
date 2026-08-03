@@ -17,6 +17,8 @@ function toPublicDocument(row) {
         currency: row.currency,
         payload: row.payload,
         issuedAt: row.issued_at,
+        voided: row.voided,
+        voidedAt: row.voided_at,
     };
 }
 
@@ -41,10 +43,30 @@ async function createDocument({ bookingId, type, amount, currency = 'USD', paylo
     return toPublicDocument(rows[0]);
 }
 
-async function listDocumentsForBooking(bookingId) {
+// `includeVoided` is only ever true for staff (Admin/Super Admin/Finance) — a renter or
+// lender should never see a proforma invoice or invoice that was voided when their
+// booking got cancelled after payment; they get the credit note instead (see
+// voidDocumentsForBooking below).
+async function listDocumentsForBooking(bookingId, { includeVoided = false } = {}) {
+    const where = includeVoided ? 'booking_id = $1' : 'booking_id = $1 AND voided = false';
     const { rows } = await pool.query(
-        'SELECT * FROM documents WHERE booking_id = $1 ORDER BY issued_at ASC',
+        `SELECT * FROM documents WHERE ${where} ORDER BY issued_at ASC`,
         [bookingId]
+    );
+    return rows.map(toPublicDocument);
+}
+
+// Marks every document of the given type(s) for a booking as voided — used when a paid
+// booking is cancelled, so the now-invalid proforma invoice and invoice stop being
+// downloadable/visible to the renter/lender (the credit note is their record instead)
+// while staff retain full visibility via Document Lookup for audit/compliance purposes.
+// Nothing is ever deleted.
+async function voidDocumentsForBooking(bookingId, types) {
+    const { rows } = await pool.query(
+        `UPDATE documents SET voided = true, voided_at = now()
+         WHERE booking_id = $1 AND type = ANY($2::text[]) AND voided = false
+         RETURNING *`,
+        [bookingId, types]
     );
     return rows.map(toPublicDocument);
 }
@@ -96,4 +118,10 @@ async function findByDocumentNumberWithContext(documentNumber) {
     };
 }
 
-module.exports = { createDocument, listDocumentsForBooking, findByDocumentNumberWithContext, toPublicDocument };
+module.exports = {
+    createDocument,
+    listDocumentsForBooking,
+    voidDocumentsForBooking,
+    findByDocumentNumberWithContext,
+    toPublicDocument,
+};

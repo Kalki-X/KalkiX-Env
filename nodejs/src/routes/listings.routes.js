@@ -80,13 +80,45 @@ router.get('/:id', attachUser, async (req, res) => {
     res.json({ ok: true, item });
 });
 
+// Both cancellation-policy fields must be present together (or both absent/null) — a
+// free-days count with no fee percent (or vice versa) isn't a coherent policy.
+function validateCancellationPolicy(cancellationFreeDays, cancellationFeePercent) {
+    const hasFreeDays = cancellationFreeDays !== undefined && cancellationFreeDays !== null;
+    const hasFeePercent = cancellationFeePercent !== undefined && cancellationFeePercent !== null;
+    if (hasFreeDays !== hasFeePercent) {
+        return 'Set both a free-cancellation window and a fee percentage, or leave both blank';
+    }
+    if (hasFreeDays && Number(cancellationFreeDays) < 0) {
+        return 'Free-cancellation days must be >= 0';
+    }
+    if (hasFeePercent && (Number(cancellationFeePercent) < 0 || Number(cancellationFeePercent) > 100)) {
+        return 'Cancellation fee percent must be between 0 and 100';
+    }
+    return null;
+}
+
 router.post('/', attachUser, requireAuth, requireCapability('isLender'), async (req, res) => {
-    const { title, description, category, pricePerDay, currency, pickupAddress, pickupLat, pickupLng } = req.body || {};
+    const {
+        title,
+        description,
+        category,
+        pricePerDay,
+        currency,
+        pickupAddress,
+        pickupLat,
+        pickupLng,
+        cancellationFreeDays,
+        cancellationFeePercent,
+    } = req.body || {};
     if (!title || pricePerDay === undefined || pricePerDay === null) {
         return res.status(400).json({ ok: false, error: 'title and pricePerDay are required' });
     }
     if (Number(pricePerDay) < 0) {
         return res.status(400).json({ ok: false, error: 'pricePerDay must be >= 0' });
+    }
+    const policyError = validateCancellationPolicy(cancellationFreeDays, cancellationFeePercent);
+    if (policyError) {
+        return res.status(400).json({ ok: false, error: policyError });
     }
 
     const item = await createItem({
@@ -99,6 +131,8 @@ router.post('/', attachUser, requireAuth, requireCapability('isLender'), async (
         pickupAddress,
         pickupLat,
         pickupLng,
+        cancellationFreeDays,
+        cancellationFeePercent,
     });
 
     await logAudit({
@@ -119,12 +153,31 @@ router.patch('/:id', attachUser, requireAuth, requireCapability('isLender'), asy
     const owned = await loadOwnedItem(req, res);
     if (!owned) return;
 
-    const { title, description, category, pricePerDay, currency, pickupAddress, pickupLat, pickupLng } = req.body || {};
+    const {
+        title,
+        description,
+        category,
+        pricePerDay,
+        currency,
+        pickupAddress,
+        pickupLat,
+        pickupLng,
+        cancellationFreeDays,
+        cancellationFeePercent,
+    } = req.body || {};
     if (title !== undefined && !title) {
         return res.status(400).json({ ok: false, error: 'title cannot be empty' });
     }
     if (pricePerDay !== undefined && Number(pricePerDay) < 0) {
         return res.status(400).json({ ok: false, error: 'pricePerDay must be >= 0' });
+    }
+    // Only validated if this edit actually touches the policy — leaving both fields out
+    // of the request body means "don't change the existing policy".
+    if (cancellationFreeDays !== undefined || cancellationFeePercent !== undefined) {
+        const policyError = validateCancellationPolicy(cancellationFreeDays, cancellationFeePercent);
+        if (policyError) {
+            return res.status(400).json({ ok: false, error: policyError });
+        }
     }
 
     const item = await updateItemFields(req.params.id, owned.owner_id, {
@@ -136,6 +189,8 @@ router.patch('/:id', attachUser, requireAuth, requireCapability('isLender'), asy
         pickupAddress,
         pickupLat,
         pickupLng,
+        cancellationFreeDays,
+        cancellationFeePercent,
     });
 
     await logAudit({

@@ -98,6 +98,8 @@ export interface DocumentLookupResult {
     currency: string;
     payload: Record<string, unknown>;
     issuedAt: string;
+    voided?: boolean;
+    voidedAt?: string | null;
     booking: { id: number; startDate: string; endDate: string; status: string; totalAmount: number };
     item: { id: number; title: string };
     renter: { id: number; name: string; email: string };

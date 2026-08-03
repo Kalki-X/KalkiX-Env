@@ -59,6 +59,17 @@ export default function DocumentLookup() {
 
             {errorMessage && <Alert type="error" showIcon message={errorMessage} />}
 
+            {result?.voided && (
+                <Alert
+                    type="warning"
+                    showIcon
+                    message="This document has been voided"
+                    description={`Superseded by a credit note when the booking was cancelled after payment. It's no longer visible to the renter or lender — this staff view is the only place it still appears.${
+                        result.voidedAt ? ` Voided ${dayjs(result.voidedAt).format('DD MMM YYYY, HH:mm')}.` : ''
+                    }`}
+                />
+            )}
+
             {result && (
                 <Card
                     id="document-lookup-result"
@@ -66,6 +77,7 @@ export default function DocumentLookup() {
                         <Space>
                             <span>{result.documentNumber}</span>
                             <Tag color="blue">{TYPE_LABEL[result.type]}</Tag>
+                            {result.voided && <Tag color="red">Voided</Tag>}
                         </Space>
                     }
                     extra={
