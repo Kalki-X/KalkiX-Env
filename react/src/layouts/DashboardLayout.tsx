@@ -6,6 +6,8 @@ import { useAuth } from "../features/auth/context/AuthContext";
 import { userAvatarUrl } from "../features/auth/api/authApi";
 import { resolveHomeRoute } from "../features/auth/utils/resolveHomeRoute";
 import NotificationBell from "../components/NotificationBell/NotificationBell";
+import SiteLogoBadge from "../components/SiteLogoBadge/SiteLogoBadge";
+import ThemeToggle from "../components/ThemeToggle/ThemeToggle";
 
 export interface DashboardNavItem {
     key: string;
@@ -82,7 +84,7 @@ export default function DashboardLayout({ title, navItems }: { title: string; na
             title="Edit your profile"
         >
             <Avatar size="small" icon={<UserOutlined />} src={user.hasAvatar ? userAvatarUrl(user.id) : undefined} />
-            <Text style={{ color: "#2B2E4A" }}>
+            <Text style={{ color: "var(--gs-heading)" }}>
                 {user.firstName} {user.lastName}
             </Text>
             <Tag color={ROLE_COLOR[user.role]}>{ROLE_LABEL[user.role] ?? user.role}</Tag>
@@ -90,11 +92,11 @@ export default function DashboardLayout({ title, navItems }: { title: string; na
     );
 
     return (
-        <Layout style={{ minHeight: "100vh", background: "#E7EEF7" }}>
+        <Layout style={{ minHeight: "100vh", background: "var(--color-background)" }}>
             <Header
                 style={{
-                    background: "#fff",
-                    borderBottom: "1px solid #d9e1f2",
+                    background: "var(--gs-surface)",
+                    borderBottom: "1px solid var(--gs-border)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
@@ -103,13 +105,14 @@ export default function DashboardLayout({ title, navItems }: { title: string; na
                 }}
             >
                 <Space size="middle" align="center">
-                    <Title level={4} style={{ margin: 0, color: "#2B2E4A" }}>
+                    <SiteLogoBadge size={32} borderRadius={9} fallbackFontSize={13} />
+                    <Title level={4} style={{ margin: 0, color: "var(--gs-heading)" }}>
                         GearShare
                     </Title>
                     {!isMobileOrTablet && (
                         <>
                             <Text style={{ color: "#94a3b8" }}>/</Text>
-                            <Text style={{ color: "#2B2E4A", fontWeight: 600 }}>{title}</Text>
+                            <Text style={{ color: "var(--gs-heading)", fontWeight: 600 }}>{title}</Text>
                         </>
                     )}
                 </Space>
@@ -119,7 +122,7 @@ export default function DashboardLayout({ title, navItems }: { title: string; na
                         <NotificationBell />
                         <Button
                             type="text"
-                            icon={<MenuOutlined style={{ fontSize: 22, color: "#2B2E4A" }} />}
+                            icon={<MenuOutlined style={{ fontSize: 22, color: "var(--gs-heading)" }} />}
                             onClick={() => setDrawerOpen(true)}
                         />
                     </Space>
@@ -144,6 +147,8 @@ export default function DashboardLayout({ title, navItems }: { title: string; na
                             View marketplace
                         </Button>
 
+                        <ThemeToggle />
+
                         <NotificationBell />
 
                         {identity}
@@ -159,7 +164,7 @@ export default function DashboardLayout({ title, navItems }: { title: string; na
                 <Menu
                     mode="horizontal"
                     selectedKeys={selectedNavKey ? [selectedNavKey] : []}
-                    style={{ borderBottom: "1px solid #d9e1f2", paddingLeft: 24 }}
+                    style={{ borderBottom: "1px solid var(--gs-border)", paddingLeft: 24 }}
                     items={navItems.map((item) => ({
                         key: item.key,
                         label: <Link to={item.path}>{item.label}</Link>,
@@ -183,7 +188,7 @@ export default function DashboardLayout({ title, navItems }: { title: string; na
                     )}
 
                     {navItems && navItems.length > 0 && (
-                        <div style={{ borderTop: "1px solid #eef2f7", paddingTop: 12 }}>
+                        <div style={{ borderTop: "1px solid var(--gs-border)", paddingTop: 12 }}>
                             <Space direction="vertical" size="small" style={{ width: "100%" }}>
                                 {navItems.map((item) => (
                                     <Button
@@ -200,8 +205,9 @@ export default function DashboardLayout({ title, navItems }: { title: string; na
                         </div>
                     )}
 
-                    <div style={{ borderTop: "1px solid #eef2f7", paddingTop: 12 }}>
-                        <Space direction="vertical" size="small" style={{ width: "100%" }}>
+                    <div style={{ borderTop: "1px solid var(--gs-border)", paddingTop: 12 }}>
+                        <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+                            <ThemeToggle block />
                             <Button block type="text" style={{ textAlign: "left" }} icon={<DashboardOutlined />} onClick={() => goTo(homeRoute)}>
                                 Dashboard
                             </Button>

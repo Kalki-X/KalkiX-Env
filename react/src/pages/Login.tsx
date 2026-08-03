@@ -23,6 +23,8 @@ import {
 import { useAuth } from '../features/auth/context/AuthContext';
 import { getApiErrorMessage, apiBaseUrl } from '../services/api/client';
 import { resolveHomeRoute } from '../features/auth/utils/resolveHomeRoute';
+import SiteLogoBadge from '../components/SiteLogoBadge/SiteLogoBadge';
+import ThemeToggle from '../components/ThemeToggle/ThemeToggle';
 
 const { Content } = Layout;
 const { Title, Text, Paragraph, Link } = Typography;
@@ -76,7 +78,7 @@ const Login = () => {
     };
 
     return (
-        <Layout style={{ minHeight: '100vh', background: '#E7EEF7' }}>
+        <Layout style={{ minHeight: '100vh', background: 'var(--color-background)' }}>
             <Content
                 style={{
                     padding: '40px 20px',
@@ -101,21 +103,8 @@ const Login = () => {
                                     justifyContent: 'center',
                                 }}
                             >
-                                <div
-                                    style={{
-                                        width: 64,
-                                        height: 64,
-                                        borderRadius: 18,
-                                        background: 'rgba(255,255,255,0.16)',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontWeight: 700,
-                                        fontSize: 22,
-                                        marginBottom: 24,
-                                    }}
-                                >
-                                    GS
+                                <div style={{ marginBottom: 24 }}>
+                                    <SiteLogoBadge size={64} borderRadius={18} fallbackBackground="rgba(255,255,255,0.16)" fallbackFontSize={22} />
                                 </div>
 
                                 <Title level={1} style={{ color: '#fff', marginBottom: 12 }}>
@@ -175,7 +164,7 @@ const Login = () => {
                             <Card
                                 style={{
                                     borderRadius: 28,
-                                    borderColor: '#d9e1f2',
+                                    borderColor: 'var(--gs-border)',
                                     boxShadow: '0 16px 40px rgba(43,46,74,0.08)',
                                 }}
                                 styles={{
@@ -184,6 +173,10 @@ const Login = () => {
                                     },
                                 }}
                             >
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+                                    <ThemeToggle />
+                                </div>
+
                                 <div style={{ marginBottom: 24 }}>
                                     <Text
                                         style={{
@@ -196,10 +189,10 @@ const Login = () => {
                                     >
                                         Account Access
                                     </Text>
-                                    <Title level={2} style={{ marginTop: 8, marginBottom: 8, color: '#2B2E4A' }}>
+                                    <Title level={2} style={{ marginTop: 8, marginBottom: 8, color: 'var(--gs-heading)' }}>
                                         Login
                                     </Title>
-                                    <Text style={{ color: '#64748b' }}>
+                                    <Text style={{ color: 'var(--color-muted)' }}>
                                         Enter your details to access your GearShare account.
                                     </Text>
                                 </div>
@@ -241,7 +234,7 @@ const Login = () => {
                                         ]}
                                     >
                                         <Input
-                                            prefix={<MailOutlined style={{ color: '#64748b' }} />}
+                                            prefix={<MailOutlined style={{ color: 'var(--color-muted)' }} />}
                                             placeholder="Enter your email"
                                             size="large"
                                             style={{ height: 46, borderRadius: 14 }}
@@ -254,7 +247,7 @@ const Login = () => {
                                         rules={[{ required: true, message: 'Please enter your password' }]}
                                     >
                                         <Input.Password
-                                            prefix={<LockOutlined style={{ color: '#64748b' }} />}
+                                            prefix={<LockOutlined style={{ color: 'var(--color-muted)' }} />}
                                             placeholder="Enter your password"
                                             size="large"
                                             style={{ height: 46, borderRadius: 14 }}
@@ -302,7 +295,7 @@ const Login = () => {
                                 </Form>
 
                                 <div style={{ textAlign: 'center' }}>
-                                    <Text style={{ color: '#64748b' }}>
+                                    <Text style={{ color: 'var(--color-muted)' }}>
                                         Don&apos;t have an account?{' '}
                                         <Link style={{ color: '#5D79BB', fontWeight: 600 }} onClick={() => navigate('/register')}>
                                             Create one

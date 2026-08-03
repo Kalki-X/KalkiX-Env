@@ -115,10 +115,10 @@ export default function RenterBookings() {
     return (
         <Space direction="vertical" size="large" style={{ width: "100%" }}>
             <div>
-                <Title level={2} style={{ color: "#2B2E4A", marginBottom: 4 }}>
+                <Title level={2} style={{ color: "var(--gs-heading)", marginBottom: 4 }}>
                     My bookings
                 </Title>
-                <Paragraph style={{ color: "#64748b" }}>
+                <Paragraph style={{ color: "var(--color-muted)" }}>
                     Track your rental requests, pay once approved, and access your documents.
                 </Paragraph>
             </div>
@@ -192,7 +192,7 @@ export default function RenterBookings() {
                 confirmLoading={paying}
                 okText={payingBooking ? `Pay ${payingBooking.currency} ${payingBooking.totalAmount.toFixed(2)}` : "Pay"}
             >
-                <Paragraph style={{ color: "#64748b" }}>
+                <Paragraph style={{ color: "var(--color-muted)" }}>
                     This is a simulated payment — no real payment provider is connected yet. Confirming here marks
                     the booking as paid and issues an invoice.
                 </Paragraph>

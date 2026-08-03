@@ -79,10 +79,10 @@ export default function PaymentManagement() {
     return (
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
             <div>
-                <Title level={2} style={{ color: '#2B2E4A', marginBottom: 4 }}>
+                <Title level={2} style={{ color: 'var(--gs-heading)', marginBottom: 4 }}>
                     Payment management
                 </Title>
-                <Paragraph style={{ color: '#64748b' }}>
+                <Paragraph style={{ color: 'var(--color-muted)' }}>
                     Every payment across the platform, with the ability to mark one as refunded.
                 </Paragraph>
             </div>

@@ -24,7 +24,29 @@
     --color-text: #1e293b;
     --color-muted: #64748b;
 
+    /* Dark-mode-aware tokens used across pages for heading text, borders, and card/
+       header "white" surfaces — light-mode values match the existing brand palette.
+       Dark-mode overrides live in the [data-theme="dark"] block below. Deliberately
+       separate from --gs-primary/--color-background above: those are also used for
+       brand-accent buttons/badges/gradients that should stay the same navy in both
+       themes, so they aren't safe to flip wholesale. */
+    --gs-heading: #2B2E4A;
+    --gs-border: #d9e1f2;
+    --gs-surface: #ffffff;
+
     --radius: 8px;
+}
+
+/* Set by ThemeContext (features/theme/context/ThemeContext.tsx) as
+   data-theme="light"|"dark" on <html>, based on the user's explicit choice or their
+   OS preference ("system", the default). */
+[data-theme="dark"] {
+    --color-background: #0f172a;
+    --color-text: #e2e8f0;
+    --color-muted: #94a3b8;
+    --gs-heading: #e8ecf7;
+    --gs-border: #2d3748;
+    --gs-surface: #1e293b;
 }
 
 /* =========================
@@ -35,7 +57,8 @@ body {
     margin: 0;
     font-family: Inter, system-ui, sans-serif;
     background: var(--color-background);
-    color: var(--gs-primary);
+    color: var(--color-text);
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* =========================

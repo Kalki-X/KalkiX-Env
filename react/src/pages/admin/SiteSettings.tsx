@@ -146,7 +146,7 @@ function BrandingAndFeesTab() {
                         <img
                             src={`${siteLogoUrl()}?v=${cacheBust}`}
                             alt="Site logo"
-                            style={{ width: 96, height: 96, objectFit: 'contain', border: '1px solid #d9e1f2', borderRadius: 12, background: '#fff' }}
+                            style={{ width: 96, height: 96, objectFit: 'contain', border: '1px solid var(--gs-border)', borderRadius: 12, background: '#fff' }}
                         />
                     ) : (
                         <div
@@ -156,7 +156,7 @@ function BrandingAndFeesTab() {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                border: '1px dashed #d9e1f2',
+                                border: '1px dashed var(--gs-border)',
                                 borderRadius: 12,
                                 color: '#94a3b8',
                             }}
@@ -183,7 +183,7 @@ function BrandingAndFeesTab() {
             </Card>
 
             <Card title="Platform fee &amp; featured-listing pricing" loading={loading}>
-                <Paragraph style={{ color: '#64748b' }}>
+                <Paragraph style={{ color: 'var(--color-muted)' }}>
                     The platform fee is deducted from what the lender is paid out — renters are always charged exactly
                     the listed price, so this never changes what appears on a renter's invoice.
                 </Paragraph>
@@ -286,7 +286,7 @@ function CategoriesTab() {
 
     return (
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
-            <Paragraph style={{ color: '#64748b', marginBottom: 0 }}>
+            <Paragraph style={{ color: 'var(--color-muted)', marginBottom: 0 }}>
                 These drive the "Rent by Category" tiles on the homepage and the category picker when listing/browsing
                 items. <SpecHint spec={specs} />
             </Paragraph>
@@ -429,7 +429,7 @@ function CarouselTab() {
 
     return (
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
-            <Paragraph style={{ color: '#64748b', marginBottom: 0 }}>
+            <Paragraph style={{ color: 'var(--color-muted)', marginBottom: 0 }}>
                 Manages the homepage hero carousel. If no slides are configured here, the homepage falls back to its
                 built-in default slides. <SpecHint spec={specs} />
             </Paragraph>
@@ -456,7 +456,7 @@ function CarouselTab() {
                                 <img
                                     src={`${carouselImageUrl(slide.id)}?v=${cacheBust}`}
                                     alt={slide.headline || 'Slide'}
-                                    style={{ width: 160, height: 60, objectFit: 'cover', borderRadius: 8, border: '1px solid #d9e1f2' }}
+                                    style={{ width: 160, height: 60, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--gs-border)' }}
                                 />
                                 <div>
                                     <Text strong>{slide.headline || <em>No headline</em>}</Text>
@@ -520,7 +520,7 @@ function FeaturedListingsTab() {
 
     return (
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
-            <Paragraph style={{ color: '#64748b', marginBottom: 0 }}>
+            <Paragraph style={{ color: 'var(--color-muted)', marginBottom: 0 }}>
                 Every paid placement in the homepage "Trending" rail. Lenders purchase their own slot from their
                 listing management screen; use Cancel here to pull one early.
             </Paragraph>
@@ -568,10 +568,10 @@ export default function SiteSettingsPage() {
     return (
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
             <div>
-                <Title level={2} style={{ color: '#2B2E4A', marginBottom: 4 }}>
+                <Title level={2} style={{ color: 'var(--gs-heading)', marginBottom: 4 }}>
                     Marketplace homepage
                 </Title>
-                <Paragraph style={{ color: '#64748b' }}>
+                <Paragraph style={{ color: 'var(--color-muted)' }}>
                     Manage what visitors see on the public homepage, plus the platform fee and featured-listing
                     pricing.
                 </Paragraph>

@@ -29,7 +29,7 @@ const PageHeader = () => {
     const isMobileOrTablet = !screens.lg;
 
     return (
-        <Layout style={{ minHeight: '100vh', background: '#E7EEF7' }}>
+        <Layout style={{ minHeight: '100vh', background: 'var(--color-background)' }}>
             <Header className={HeaderCSS.header} style={{ padding: isMobileOrTablet ? '0 16px' : '0 32px' }}>
 
                 <div className={HeaderCSS.headerDiv}>
@@ -55,7 +55,7 @@ const PageHeader = () => {
                         <Input
                             size="large"
                             placeholder="Search for cameras, tools, speakers..."
-                            prefix={<SearchOutlined style={{ color: '#64748b' }} />}
+                            prefix={<SearchOutlined style={{ color: 'var(--color-muted)' }} />}
                             className={HeaderCSS.headerSearch}
                         />
                     </div>
@@ -83,7 +83,7 @@ const PageHeader = () => {
                     {isMobileOrTablet && (
                         <Button
                             type="text"
-                            icon={<MenuOutlined style={{ fontSize: 22, color: '#2B2E4A' }} />}
+                            icon={<MenuOutlined style={{ fontSize: 22, color: 'var(--gs-heading)' }} />}
                             onClick={() => setDrawerOpen(true)}
                             className={HeaderCSS.burger}
                         />

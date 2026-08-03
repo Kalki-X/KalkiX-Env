@@ -22,12 +22,12 @@ export default function ComingSoon({ heading, subheading, phaseLabel, features }
         <Space direction="vertical" size="large" style={{ width: "100%" }}>
             <div>
                 <Space align="center" size="middle">
-                    <Title level={2} style={{ color: "#2B2E4A", margin: 0 }}>
+                    <Title level={2} style={{ color: "var(--gs-heading)", margin: 0 }}>
                         {heading}
                     </Title>
                     <Tag color="processing">{phaseLabel}</Tag>
                 </Space>
-                <Paragraph style={{ color: "#64748b", marginTop: 8 }}>{subheading}</Paragraph>
+                <Paragraph style={{ color: "var(--color-muted)", marginTop: 8 }}>{subheading}</Paragraph>
             </div>
 
             <Row gutter={[16, 16]}>
@@ -39,7 +39,7 @@ export default function ComingSoon({ heading, subheading, phaseLabel, features }
                                     {f.icon}
                                     <strong>{f.title}</strong>
                                 </Space>
-                                <Paragraph style={{ color: "#64748b", marginBottom: 0, fontSize: 13 }}>
+                                <Paragraph style={{ color: "var(--color-muted)", marginBottom: 0, fontSize: 13 }}>
                                     {f.desc}
                                 </Paragraph>
                             </Space>

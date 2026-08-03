@@ -33,28 +33,28 @@ const ForgotPassword = () => {
     };
 
     return (
-        <Layout style={{ minHeight: '100vh', background: '#E7EEF7' }}>
+        <Layout style={{ minHeight: '100vh', background: 'var(--color-background)' }}>
             <Content style={{ padding: '40px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <div style={{ width: '100%', maxWidth: 480 }}>
                     <Row>
                         <Col span={24}>
                             <Card
-                                style={{ borderRadius: 28, borderColor: '#d9e1f2', boxShadow: '0 16px 40px rgba(43,46,74,0.08)' }}
+                                style={{ borderRadius: 28, borderColor: 'var(--gs-border)', boxShadow: '0 16px 40px rgba(43,46,74,0.08)' }}
                                 styles={{ body: { padding: 36 } }}
                             >
                                 <Button
                                     type="text"
                                     icon={<ArrowLeftOutlined />}
                                     onClick={() => navigate('/login')}
-                                    style={{ marginBottom: 12, paddingLeft: 0, color: '#64748b' }}
+                                    style={{ marginBottom: 12, paddingLeft: 0, color: 'var(--color-muted)' }}
                                 >
                                     Back to login
                                 </Button>
 
-                                <Title level={2} style={{ marginBottom: 8, color: '#2B2E4A' }}>
+                                <Title level={2} style={{ marginBottom: 8, color: 'var(--gs-heading)' }}>
                                     Forgot your password?
                                 </Title>
-                                <Paragraph style={{ color: '#64748b', marginBottom: 24 }}>
+                                <Paragraph style={{ color: 'var(--color-muted)', marginBottom: 24 }}>
                                     Enter the email on your account and we'll send you a link to reset it.
                                 </Paragraph>
 
@@ -75,7 +75,7 @@ const ForgotPassword = () => {
                                         ]}
                                     >
                                         <Input
-                                            prefix={<MailOutlined style={{ color: '#64748b' }} />}
+                                            prefix={<MailOutlined style={{ color: 'var(--color-muted)' }} />}
                                             placeholder="Enter your email"
                                             size="large"
                                             style={{ height: 46, borderRadius: 14 }}
@@ -103,7 +103,7 @@ const ForgotPassword = () => {
                                 </Form>
 
                                 <div style={{ textAlign: 'center', marginTop: 20 }}>
-                                    <Text style={{ color: '#64748b' }}>
+                                    <Text style={{ color: 'var(--color-muted)' }}>
                                         Remembered it?{' '}
                                         <Link style={{ color: '#5D79BB', fontWeight: 600 }} onClick={() => navigate('/login')}>
                                             Log in

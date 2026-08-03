@@ -105,10 +105,10 @@ export default function LenderListings() {
         <Space direction="vertical" size="large" style={{ width: "100%" }}>
             <Space style={{ width: "100%", justifyContent: "space-between" }} wrap>
                 <div>
-                    <Title level={2} style={{ color: "#2B2E4A", marginBottom: 4 }}>
+                    <Title level={2} style={{ color: "var(--gs-heading)", marginBottom: 4 }}>
                         My listings
                     </Title>
-                    <Paragraph style={{ color: "#64748b", marginBottom: 0 }}>
+                    <Paragraph style={{ color: "var(--color-muted)", marginBottom: 0 }}>
                         Add, edit, pause, or archive the items you're lending out.
                     </Paragraph>
                 </div>
@@ -226,7 +226,7 @@ export default function LenderListings() {
                 confirmLoading={featuring}
                 okText="Pay & feature"
             >
-                <Paragraph style={{ color: "#64748b" }}>
+                <Paragraph style={{ color: "var(--color-muted)" }}>
                     Paid placements appear in the "Trending" rail on the GearShare homepage. Payment is processed
                     immediately (simulated, same as booking payments).
                 </Paragraph>

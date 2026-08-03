@@ -44,10 +44,10 @@ export default function RenterBrowse() {
     return (
         <Space direction="vertical" size="large" style={{ width: "100%" }}>
             <div>
-                <Title level={2} style={{ color: "#2B2E4A", marginBottom: 4 }}>
+                <Title level={2} style={{ color: "var(--gs-heading)", marginBottom: 4 }}>
                     Browse
                 </Title>
-                <Paragraph style={{ color: "#64748b" }}>
+                <Paragraph style={{ color: "var(--color-muted)" }}>
                     Search everything currently available to rent.
                 </Paragraph>
             </div>
@@ -120,7 +120,7 @@ export default function RenterBrowse() {
                                     description={
                                         <Space direction="vertical" size={4}>
                                             {item.category && <Tag>{item.category}</Tag>}
-                                            <Text strong style={{ color: "#2B2E4A" }}>
+                                            <Text strong style={{ color: "var(--gs-heading)" }}>
                                                 {item.currency} {item.pricePerDay.toFixed(2)} / day
                                             </Text>
                                         </Space>

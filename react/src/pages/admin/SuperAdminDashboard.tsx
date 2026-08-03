@@ -96,10 +96,10 @@ export default function SuperAdminDashboard() {
     return (
         <Space direction="vertical" size="large" style={{ width: "100%" }}>
             <div>
-                <Title level={2} style={{ color: "#2B2E4A", marginBottom: 4 }}>
+                <Title level={2} style={{ color: "var(--gs-heading)", marginBottom: 4 }}>
                     Super Admin
                 </Title>
-                <Paragraph style={{ color: "#64748b" }}>
+                <Paragraph style={{ color: "var(--color-muted)" }}>
                     Platform overview and staff account provisioning.
                 </Paragraph>
             </div>
@@ -164,7 +164,7 @@ export default function SuperAdminDashboard() {
                     </Space>
                 }
             >
-                <Paragraph style={{ color: "#64748b" }}>
+                <Paragraph style={{ color: "var(--color-muted)" }}>
                     These roles can't self-register — only a Super Admin can create them.
                 </Paragraph>
 
@@ -240,7 +240,7 @@ export default function SuperAdminDashboard() {
             </Card>
 
             <div>
-                <Title level={4} style={{ color: "#2B2E4A" }}>
+                <Title level={4} style={{ color: "var(--gs-heading)" }}>
                     Manage
                 </Title>
                 <Row gutter={[16, 16]}>
@@ -253,7 +253,7 @@ export default function SuperAdminDashboard() {
                                             {s.icon}
                                             <strong>{s.title}</strong>
                                         </Space>
-                                        <Paragraph style={{ color: "#64748b", marginBottom: 0, fontSize: 13 }}>
+                                        <Paragraph style={{ color: "var(--color-muted)", marginBottom: 0, fontSize: 13 }}>
                                             {s.desc}
                                         </Paragraph>
                                     </Space>

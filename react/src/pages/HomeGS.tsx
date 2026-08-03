@@ -10,7 +10,7 @@ const HomeGS = () => {
     }, []);
 
     return (
-        <Layout style={{ minHeight: '100vh', background: '#E7EEF7' }}>
+        <Layout style={{ minHeight: '100vh', background: 'var(--color-background)' }}>
 
             <HeaderComponent />
 

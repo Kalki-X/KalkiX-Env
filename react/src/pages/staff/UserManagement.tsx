@@ -99,10 +99,10 @@ export default function StaffUserManagement() {
     return (
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
             <div>
-                <Title level={2} style={{ color: '#2B2E4A', marginBottom: 4 }}>
+                <Title level={2} style={{ color: 'var(--gs-heading)', marginBottom: 4 }}>
                     User management
                 </Title>
-                <Paragraph style={{ color: '#64748b' }}>
+                <Paragraph style={{ color: 'var(--color-muted)' }}>
                     Look up platform users, toggle renter/lender capabilities, and suspend or reactivate accounts.
                 </Paragraph>
             </div>

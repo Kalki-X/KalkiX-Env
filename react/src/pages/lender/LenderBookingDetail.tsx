@@ -143,12 +143,12 @@ export default function LenderBookingDetail() {
 
             <div>
                 <Space align="center">
-                    <Title level={2} style={{ color: "#2B2E4A", marginBottom: 4 }}>
+                    <Title level={2} style={{ color: "var(--gs-heading)", marginBottom: 4 }}>
                         {booking.item.title}
                     </Title>
                     <Tag color={STATUS_COLOR[booking.status]}>{STATUS_LABEL[booking.status]}</Tag>
                 </Space>
-                <Paragraph style={{ color: "#64748b" }}>
+                <Paragraph style={{ color: "var(--color-muted)" }}>
                     Booking #{booking.id} · requested {dayjs(booking.createdAt).format("DD MMM YYYY, HH:mm")}
                 </Paragraph>
             </div>
@@ -232,7 +232,7 @@ export default function LenderBookingDetail() {
                 okText="Reject request"
                 okButtonProps={{ danger: true, disabled: !rejectReason.trim() }}
             >
-                <Paragraph style={{ color: "#64748b" }}>
+                <Paragraph style={{ color: "var(--color-muted)" }}>
                     A reason is required — this is shown to the renter and kept on the booking record.
                 </Paragraph>
                 <TextArea

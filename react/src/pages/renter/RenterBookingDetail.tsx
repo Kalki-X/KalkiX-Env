@@ -128,12 +128,12 @@ export default function RenterBookingDetail() {
 
             <div>
                 <Space align="center">
-                    <Title level={2} style={{ color: "#2B2E4A", marginBottom: 4 }}>
+                    <Title level={2} style={{ color: "var(--gs-heading)", marginBottom: 4 }}>
                         {booking.item.title}
                     </Title>
                     <Tag color={STATUS_COLOR[booking.status]}>{STATUS_LABEL[booking.status]}</Tag>
                 </Space>
-                <Paragraph style={{ color: "#64748b" }}>
+                <Paragraph style={{ color: "var(--color-muted)" }}>
                     Booking #{booking.id} · requested {dayjs(booking.createdAt).format("DD MMM YYYY, HH:mm")}
                 </Paragraph>
             </div>
@@ -211,7 +211,7 @@ export default function RenterBookingDetail() {
                 confirmLoading={busy}
                 okText={`Pay ${booking.currency} ${booking.totalAmount.toFixed(2)}`}
             >
-                <Paragraph style={{ color: "#64748b" }}>
+                <Paragraph style={{ color: "var(--color-muted)" }}>
                     This is a simulated payment — no real payment provider is connected yet. Confirming here marks
                     the booking as paid and issues an invoice.
                 </Paragraph>

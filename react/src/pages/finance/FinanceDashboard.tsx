@@ -15,10 +15,10 @@ export default function FinanceDashboard() {
     return (
         <Space direction="vertical" size="large" style={{ width: "100%" }}>
             <div>
-                <Title level={2} style={{ color: "#2B2E4A", marginBottom: 4 }}>
+                <Title level={2} style={{ color: "var(--gs-heading)", marginBottom: 4 }}>
                     Finance
                 </Title>
-                <Paragraph style={{ color: "#64748b" }}>
+                <Paragraph style={{ color: "var(--color-muted)" }}>
                     Manage the GearShare account and reconcile platform payments. Every table below can be
                     exported (CSV/Excel/PDF) for filing outside the system.
                 </Paragraph>
@@ -34,7 +34,7 @@ export default function FinanceDashboard() {
                                         {s.icon}
                                         <strong>{s.title}</strong>
                                     </Space>
-                                    <Paragraph style={{ color: "#64748b", marginBottom: 0, fontSize: 13 }}>
+                                    <Paragraph style={{ color: "var(--color-muted)", marginBottom: 0, fontSize: 13 }}>
                                         {s.desc}
                                     </Paragraph>
                                 </Space>

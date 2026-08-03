@@ -39,16 +39,16 @@ const ResetPassword = () => {
     };
 
     return (
-        <Layout style={{ minHeight: '100vh', background: '#E7EEF7' }}>
+        <Layout style={{ minHeight: '100vh', background: 'var(--color-background)' }}>
             <Content style={{ padding: '40px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <div style={{ width: '100%', maxWidth: 480 }}>
                     <Row>
                         <Col span={24}>
                             <Card
-                                style={{ borderRadius: 28, borderColor: '#d9e1f2', boxShadow: '0 16px 40px rgba(43,46,74,0.08)' }}
+                                style={{ borderRadius: 28, borderColor: 'var(--gs-border)', boxShadow: '0 16px 40px rgba(43,46,74,0.08)' }}
                                 styles={{ body: { padding: 36 } }}
                             >
-                                <Title level={2} style={{ marginBottom: 8, color: '#2B2E4A' }}>
+                                <Title level={2} style={{ marginBottom: 8, color: 'var(--gs-heading)' }}>
                                     Set a new password
                                 </Title>
 
@@ -81,7 +81,7 @@ const ResetPassword = () => {
                                     </>
                                 ) : (
                                     <>
-                                        <Paragraph style={{ color: '#64748b', marginBottom: 24 }}>
+                                        <Paragraph style={{ color: 'var(--color-muted)', marginBottom: 24 }}>
                                             Choose a new password for your account.
                                         </Paragraph>
 
@@ -96,7 +96,7 @@ const ResetPassword = () => {
                                                 rules={[{ required: true, min: 8, message: 'At least 8 characters' }]}
                                             >
                                                 <Input.Password
-                                                    prefix={<LockOutlined style={{ color: '#64748b' }} />}
+                                                    prefix={<LockOutlined style={{ color: 'var(--color-muted)' }} />}
                                                     placeholder="New password"
                                                     size="large"
                                                     style={{ height: 46, borderRadius: 14 }}
@@ -120,7 +120,7 @@ const ResetPassword = () => {
                                                 ]}
                                             >
                                                 <Input.Password
-                                                    prefix={<LockOutlined style={{ color: '#64748b' }} />}
+                                                    prefix={<LockOutlined style={{ color: 'var(--color-muted)' }} />}
                                                     placeholder="Confirm new password"
                                                     size="large"
                                                     style={{ height: 46, borderRadius: 14 }}
@@ -143,7 +143,7 @@ const ResetPassword = () => {
                                         </Form>
 
                                         <div style={{ textAlign: 'center', marginTop: 20 }}>
-                                            <Text style={{ color: '#64748b' }}>
+                                            <Text style={{ color: 'var(--color-muted)' }}>
                                                 <Link style={{ color: '#5D79BB', fontWeight: 600 }} onClick={() => navigate('/login')}>
                                                     Back to login
                                                 </Link>

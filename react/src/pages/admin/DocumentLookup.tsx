@@ -36,10 +36,10 @@ export default function DocumentLookup() {
     return (
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
             <div>
-                <Title level={2} style={{ color: '#2B2E4A', marginBottom: 4 }}>
+                <Title level={2} style={{ color: 'var(--gs-heading)', marginBottom: 4 }}>
                     Document lookup
                 </Title>
-                <Paragraph style={{ color: '#64748b' }}>
+                <Paragraph style={{ color: 'var(--color-muted)' }}>
                     Find any proforma invoice, invoice, or credit note by its reference number.
                 </Paragraph>
             </div>

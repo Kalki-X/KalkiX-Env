@@ -82,7 +82,7 @@ const Register = () => {
     };
 
     return (
-        <Layout style={{ minHeight: '100vh', background: '#E7EEF7' }}>
+        <Layout style={{ minHeight: '100vh', background: 'var(--color-background)' }}>
             <Content
                 style={{
                     padding: '40px 20px',
@@ -98,7 +98,7 @@ const Register = () => {
                             <div
                                 style={{
                                     background: '#f7f4ea',
-                                    border: '1px solid #d9e1f2',
+                                    border: '1px solid var(--gs-border)',
                                     borderRadius: 28,
                                     padding: '48px 40px',
                                     minHeight: 680,
@@ -119,7 +119,7 @@ const Register = () => {
                                     Join the marketplace
                                 </Text>
 
-                                <Title level={1} style={{ color: '#2B2E4A', marginTop: 12, marginBottom: 12 }}>
+                                <Title level={1} style={{ color: 'var(--gs-heading)', marginTop: 12, marginBottom: 12 }}>
                                     Create your GearShare account
                                 </Title>
 
@@ -133,14 +133,14 @@ const Register = () => {
                                         style={{
                                             borderRadius: 20,
                                             background: '#ffffff',
-                                            border: '1px solid #d9e1f2',
+                                            border: '1px solid var(--gs-border)',
                                             padding: 18,
                                         }}
                                     >
-                                        <Text style={{ display: 'block', color: '#2B2E4A', fontWeight: 700 }}>
+                                        <Text style={{ display: 'block', color: 'var(--gs-heading)', fontWeight: 700 }}>
                                             For renters
                                         </Text>
-                                        <Text style={{ color: '#64748b' }}>
+                                        <Text style={{ color: 'var(--color-muted)' }}>
                                             Discover quality items, compare options, and book the things you need quickly.
                                         </Text>
                                     </div>
@@ -149,14 +149,14 @@ const Register = () => {
                                         style={{
                                             borderRadius: 20,
                                             background: '#ffffff',
-                                            border: '1px solid #d9e1f2',
+                                            border: '1px solid var(--gs-border)',
                                             padding: 18,
                                         }}
                                     >
-                                        <Text style={{ display: 'block', color: '#2B2E4A', fontWeight: 700 }}>
+                                        <Text style={{ display: 'block', color: 'var(--gs-heading)', fontWeight: 700 }}>
                                             For owners
                                         </Text>
-                                        <Text style={{ color: '#64748b' }}>
+                                        <Text style={{ color: 'var(--color-muted)' }}>
                                             Create listings, accept bookings, and turn unused items into recurring income.
                                         </Text>
                                     </div>
@@ -184,7 +184,7 @@ const Register = () => {
                             <Card
                                 style={{
                                     borderRadius: 28,
-                                    borderColor: '#d9e1f2',
+                                    borderColor: 'var(--gs-border)',
                                     boxShadow: '0 16px 40px rgba(43,46,74,0.08)',
                                 }}
                                 styles={{
@@ -194,10 +194,10 @@ const Register = () => {
                                 }}
                             >
                                 <div style={{ marginBottom: 24 }}>
-                                    <Title level={2} style={{ marginBottom: 8, color: '#2B2E4A' }}>
+                                    <Title level={2} style={{ marginBottom: 8, color: 'var(--gs-heading)' }}>
                                         Registration
                                     </Title>
-                                    <Text style={{ color: '#64748b' }}>
+                                    <Text style={{ color: 'var(--color-muted)' }}>
                                         Create your account and start your GearShare journey today.
                                     </Text>
                                 </div>
@@ -238,7 +238,7 @@ const Register = () => {
                                                 rules={[{ required: true, message: 'Please enter your first name' }]}
                                             >
                                                 <Input
-                                                    prefix={<UserOutlined style={{ color: '#64748b' }} />}
+                                                    prefix={<UserOutlined style={{ color: 'var(--color-muted)' }} />}
                                                     placeholder="First name"
                                                     size="large"
                                                     style={{ height: 46, borderRadius: 14 }}
@@ -253,7 +253,7 @@ const Register = () => {
                                                 rules={[{ required: true, message: 'Please enter your last name' }]}
                                             >
                                                 <Input
-                                                    prefix={<UserOutlined style={{ color: '#64748b' }} />}
+                                                    prefix={<UserOutlined style={{ color: 'var(--color-muted)' }} />}
                                                     placeholder="Last name"
                                                     size="large"
                                                     style={{ height: 46, borderRadius: 14 }}
@@ -273,7 +273,7 @@ const Register = () => {
                                                 ]}
                                             >
                                                 <Input
-                                                    prefix={<MailOutlined style={{ color: '#64748b' }} />}
+                                                    prefix={<MailOutlined style={{ color: 'var(--color-muted)' }} />}
                                                     placeholder="Enter your email"
                                                     size="large"
                                                     style={{ height: 46, borderRadius: 14 }}
@@ -288,7 +288,7 @@ const Register = () => {
                                                 rules={[{ required: true, message: 'Please enter your phone number' }]}
                                             >
                                                 <Input
-                                                    prefix={<PhoneOutlined style={{ color: '#64748b' }} />}
+                                                    prefix={<PhoneOutlined style={{ color: 'var(--color-muted)' }} />}
                                                     placeholder="Enter your phone"
                                                     size="large"
                                                     style={{ height: 46, borderRadius: 14 }}
@@ -321,7 +321,7 @@ const Register = () => {
                                                 rules={[{ required: true, message: 'Please enter your password' }]}
                                             >
                                                 <Input.Password
-                                                    prefix={<LockOutlined style={{ color: '#64748b' }} />}
+                                                    prefix={<LockOutlined style={{ color: 'var(--color-muted)' }} />}
                                                     placeholder="Create password"
                                                     size="large"
                                                     style={{ height: 46, borderRadius: 14 }}
@@ -347,7 +347,7 @@ const Register = () => {
                                                 ]}
                                             >
                                                 <Input.Password
-                                                    prefix={<LockOutlined style={{ color: '#64748b' }} />}
+                                                    prefix={<LockOutlined style={{ color: 'var(--color-muted)' }} />}
                                                     placeholder="Confirm password"
                                                     size="large"
                                                     style={{ height: 46, borderRadius: 14 }}
@@ -395,7 +395,7 @@ const Register = () => {
                                 </Form>
 
                                 <div style={{ textAlign: 'center' }}>
-                                    <Text style={{ color: '#64748b' }}>
+                                    <Text style={{ color: 'var(--color-muted)' }}>
                                         Already have an account?{' '}
                                         <Link style={{ color: '#5D79BB', fontWeight: 600 }} onClick={() => navigate('/login')}>
                                             Login

@@ -70,10 +70,10 @@ export default function Notifications() {
         <Space direction="vertical" size="large" style={{ width: "100%" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
                 <div>
-                    <Title level={2} style={{ color: "#2B2E4A", marginBottom: 4 }}>
+                    <Title level={2} style={{ color: "var(--gs-heading)", marginBottom: 4 }}>
                         Notifications
                     </Title>
-                    <Paragraph style={{ color: "#64748b", marginBottom: 0 }}>
+                    <Paragraph style={{ color: "var(--color-muted)", marginBottom: 0 }}>
                         Booking requests, approvals, rejections, payments, and cancellations — all in one place.
                     </Paragraph>
                 </div>
@@ -105,7 +105,7 @@ export default function Notifications() {
                                     <Text strong={!n.readAt}>{n.title}</Text>
                                     {!n.readAt && <Tag color="blue">New</Tag>}
                                 </Space>
-                                {n.body && <Text style={{ color: "#64748b" }}>{n.body}</Text>}
+                                {n.body && <Text style={{ color: "var(--color-muted)" }}>{n.body}</Text>}
                                 <Text style={{ fontSize: 12, color: "#94a3b8" }}>
                                     {dayjs(n.createdAt).format("DD MMM YYYY, HH:mm")}
                                 </Text>

@@ -47,10 +47,10 @@ export default function ErrorReports() {
     return (
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
             <div>
-                <Title level={2} style={{ color: '#2B2E4A', marginBottom: 4 }}>
+                <Title level={2} style={{ color: 'var(--gs-heading)', marginBottom: 4 }}>
                     System error reports
                 </Title>
-                <Paragraph style={{ color: '#64748b' }}>
+                <Paragraph style={{ color: 'var(--color-muted)' }}>
                     Every unhandled 500 the API has returned, for triage.
                 </Paragraph>
             </div>

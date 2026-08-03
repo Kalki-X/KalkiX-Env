@@ -115,7 +115,7 @@ export default function NotificationBell() {
                                 <Text strong={!n.readAt} style={{ display: "block", fontSize: 13 }}>
                                     {n.title}
                                 </Text>
-                                {n.body && <Text style={{ display: "block", fontSize: 12, color: "#64748b" }}>{n.body}</Text>}
+                                {n.body && <Text style={{ display: "block", fontSize: 12, color: "var(--color-muted)" }}>{n.body}</Text>}
                                 <Text style={{ fontSize: 11, color: "#94a3b8" }}>{dayjs(n.createdAt).fromNow()}</Text>
                             </div>
                         </List.Item>

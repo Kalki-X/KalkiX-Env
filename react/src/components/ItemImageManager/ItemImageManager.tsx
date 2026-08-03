@@ -108,7 +108,7 @@ export default function ItemImageManager({ itemId }: { itemId: number }) {
                     </Upload>
                 )}
             </Space>
-            <span style={{ color: "#64748b", fontSize: 13 }}>
+            <span style={{ color: "var(--color-muted)", fontSize: 13 }}>
                 {images.length}/{MAX_IMAGES} photos. The first photo is used as the listing's thumbnail.
             </span>
         </Space>

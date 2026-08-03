@@ -34,10 +34,10 @@ export default function LenderDashboard() {
     return (
         <Space direction="vertical" size="large" style={{ width: "100%" }}>
             <div>
-                <Title level={2} style={{ color: "#2B2E4A", marginBottom: 4 }}>
+                <Title level={2} style={{ color: "var(--gs-heading)", marginBottom: 4 }}>
                     Lender
                 </Title>
-                <Paragraph style={{ color: "#64748b" }}>
+                <Paragraph style={{ color: "var(--color-muted)" }}>
                     List items, manage availability, and track incoming bookings.
                 </Paragraph>
             </div>
@@ -80,7 +80,7 @@ export default function LenderDashboard() {
                                         {s.icon}
                                         <strong>{s.title}</strong>
                                     </Space>
-                                    <Paragraph style={{ color: "#64748b", marginBottom: 0, fontSize: 13 }}>
+                                    <Paragraph style={{ color: "var(--color-muted)", marginBottom: 0, fontSize: 13 }}>
                                         {s.desc}
                                     </Paragraph>
                                 </Space>

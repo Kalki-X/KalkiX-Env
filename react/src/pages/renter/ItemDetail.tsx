@@ -159,7 +159,7 @@ export default function ItemDetail() {
                         )}
 
                         <div>
-                            <Title level={2} style={{ color: "#2B2E4A", marginBottom: 4 }}>
+                            <Title level={2} style={{ color: "var(--gs-heading)", marginBottom: 4 }}>
                                 {item.title}
                             </Title>
                             {item.category && <Tag>{item.category}</Tag>}
@@ -186,8 +186,8 @@ export default function ItemDetail() {
                 <Col xs={24} md={10}>
                     <Card>
                         <Space direction="vertical" size="middle" style={{ width: "100%" }}>
-                            <Text style={{ fontSize: 22, fontWeight: 700, color: "#2B2E4A" }}>
-                                {item.currency} {item.pricePerDay.toFixed(2)} <Text style={{ fontSize: 14, fontWeight: 400, color: "#64748b" }}>/ day</Text>
+                            <Text style={{ fontSize: 22, fontWeight: 700, color: "var(--gs-heading)" }}>
+                                {item.currency} {item.pricePerDay.toFixed(2)} <Text style={{ fontSize: 14, fontWeight: 400, color: "var(--color-muted)" }}>/ day</Text>
                             </Text>
 
                             {bookingError && <Alert type="error" showIcon message={bookingError} />}

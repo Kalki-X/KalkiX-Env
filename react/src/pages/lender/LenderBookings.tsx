@@ -110,10 +110,10 @@ export default function LenderBookings() {
     return (
         <Space direction="vertical" size="large" style={{ width: "100%" }}>
             <div>
-                <Title level={2} style={{ color: "#2B2E4A", marginBottom: 4 }}>
+                <Title level={2} style={{ color: "var(--gs-heading)", marginBottom: 4 }}>
                     Bookings
                 </Title>
-                <Paragraph style={{ color: "#64748b" }}>
+                <Paragraph style={{ color: "var(--color-muted)" }}>
                     Incoming requests and past bookings across everything you're lending out.
                 </Paragraph>
             </div>
@@ -140,7 +140,7 @@ export default function LenderBookings() {
                         render: (_, b) =>
                             b.renterNote ? (
                                 <Tooltip title={b.renterNote}>
-                                    <InfoCircleOutlined style={{ color: "#2B2E4A" }} />
+                                    <InfoCircleOutlined style={{ color: "var(--gs-heading)" }} />
                                 </Tooltip>
                             ) : (
                                 "—"
@@ -208,7 +208,7 @@ export default function LenderBookings() {
                 okText="Reject request"
                 okButtonProps={{ danger: true, disabled: !rejectReason.trim() }}
             >
-                <Paragraph style={{ color: "#64748b" }}>
+                <Paragraph style={{ color: "var(--color-muted)" }}>
                     A reason is required — this is shown to the renter and kept on the booking record.
                 </Paragraph>
                 <TextArea

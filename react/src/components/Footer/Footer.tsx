@@ -14,17 +14,17 @@ const FooterComponent = () => {
         <Footer
             style={{
                 background: '#ffffff',
-                borderTop: '1px solid #d9e1f2',
+                borderTop: '1px solid var(--gs-border)',
                 padding: '32px 24px',
             }}
         >
             <div style={{ maxWidth: 1200, margin: '0 auto' }}>
                 <Row gutter={[24, 24]} justify="space-between">
                     <Col xs={24} md={10}>
-                        <Text style={{ display: 'block', fontSize: 18, fontWeight: 700, color: '#2B2E4A' }}>
+                        <Text style={{ display: 'block', fontSize: 18, fontWeight: 700, color: 'var(--gs-heading)' }}>
                             GearShare
                         </Text>
-                        <Paragraph style={{ color: '#64748b', marginTop: 8, marginBottom: 0 }}>
+                        <Paragraph style={{ color: 'var(--color-muted)', marginTop: 8, marginBottom: 0 }}>
                             Rent smarter. Share more. Access the things you need without the full cost of
                             ownership.
                         </Paragraph>
@@ -72,7 +72,7 @@ const FooterComponent = () => {
                         textAlign: 'center',
                     }}
                 >
-                    <Text style={{ color: '#64748b' }}>© 2026 GearShare. All rights reserved.</Text>
+                    <Text style={{ color: 'var(--color-muted)' }}>© 2026 GearShare. All rights reserved.</Text>
                 </div>
             </div>
         </Footer>

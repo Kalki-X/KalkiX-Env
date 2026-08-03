@@ -77,11 +77,11 @@ export default function PublicBrowse() {
     };
 
     return (
-        <Layout style={{ minHeight: '100vh', background: '#E7EEF7' }}>
+        <Layout style={{ minHeight: '100vh', background: 'var(--color-background)' }}>
             <Header
                 style={{
-                    background: '#ffffff',
-                    borderBottom: '1px solid #d9e1f2',
+                    background: 'var(--gs-surface)',
+                    borderBottom: '1px solid var(--gs-border)',
                     padding: '0 24px',
                     height: 72,
                     display: 'flex',
@@ -90,7 +90,7 @@ export default function PublicBrowse() {
                 }}
             >
                 <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <Button type="text" icon={<ArrowLeftOutlined />} style={{ color: '#2B2E4A' }}>
+                    <Button type="text" icon={<ArrowLeftOutlined />} style={{ color: 'var(--gs-heading)' }}>
                         GearShare
                     </Button>
                 </Link>
@@ -106,10 +106,10 @@ export default function PublicBrowse() {
                 <div style={{ maxWidth: 1200, margin: '0 auto' }}>
                     <Space direction="vertical" size="large" style={{ width: '100%' }}>
                         <div>
-                            <Title level={2} style={{ color: '#2B2E4A', marginBottom: 4 }}>
+                            <Title level={2} style={{ color: 'var(--gs-heading)', marginBottom: 4 }}>
                                 Browse GearShare
                             </Title>
-                            <Paragraph style={{ color: '#64748b' }}>
+                            <Paragraph style={{ color: 'var(--color-muted)' }}>
                                 Search everything currently available to rent. Sign in to book an item.
                             </Paragraph>
                         </div>
@@ -176,7 +176,7 @@ export default function PublicBrowse() {
                                                 description={
                                                     <Space direction="vertical" size={4}>
                                                         {item.category && <Tag>{item.category}</Tag>}
-                                                        <Text strong style={{ color: '#2B2E4A' }}>
+                                                        <Text strong style={{ color: 'var(--gs-heading)' }}>
                                                             {item.currency} {item.pricePerDay.toFixed(2)} / day
                                                         </Text>
                                                     </Space>

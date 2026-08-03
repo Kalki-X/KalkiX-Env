@@ -134,10 +134,10 @@ export default function EmailTemplates() {
     return (
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
             <div>
-                <Title level={2} style={{ color: '#2B2E4A', marginBottom: 4 }}>
+                <Title level={2} style={{ color: 'var(--gs-heading)', marginBottom: 4 }}>
                     Email templates
                 </Title>
-                <Paragraph style={{ color: '#64748b' }}>
+                <Paragraph style={{ color: 'var(--color-muted)' }}>
                     Customize the wording of every predefined system email. Action buttons/links (e.g. "Reset password",
                     "View &amp; Decide") are always appended automatically — editing the text above never removes them.
                 </Paragraph>
@@ -168,7 +168,7 @@ export default function EmailTemplates() {
                                 }}
                             >
                                 <Space direction="vertical" size={0} style={{ width: '100%' }}>
-                                    <Text strong={t.type === selectedType} style={{ color: '#2B2E4A' }}>
+                                    <Text strong={t.type === selectedType} style={{ color: 'var(--gs-heading)' }}>
                                         {t.label}
                                     </Text>
                                     {!t.isDefault && (
@@ -200,11 +200,11 @@ export default function EmailTemplates() {
                                 </Space>
                             }
                         >
-                            <Paragraph style={{ color: '#64748b' }}>{selected.description}</Paragraph>
+                            <Paragraph style={{ color: 'var(--color-muted)' }}>{selected.description}</Paragraph>
 
                             {selected.placeholders.length > 0 && (
                                 <div style={{ marginBottom: 16 }}>
-                                    <Text style={{ color: '#64748b', marginRight: 8 }}>Insert placeholder:</Text>
+                                    <Text style={{ color: 'var(--color-muted)', marginRight: 8 }}>Insert placeholder:</Text>
                                     <Space size={[4, 4]} wrap>
                                         {selected.placeholders.map((p) => (
                                             <Tooltip key={p} title={`Click to insert {{${p}}} into the body`}>
@@ -275,7 +275,7 @@ export default function EmailTemplates() {
                             {preview && (
                                 <>
                                     <Divider />
-                                    <Text style={{ color: '#64748b' }}>Preview (rendered with sample data)</Text>
+                                    <Text style={{ color: 'var(--color-muted)' }}>Preview (rendered with sample data)</Text>
                                     <Card size="small" style={{ marginTop: 8, background: '#f8fafc' }}>
                                         <Text strong>Subject: </Text>
                                         <Text>{preview.subject}</Text>

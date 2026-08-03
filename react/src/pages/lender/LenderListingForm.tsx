@@ -159,10 +159,10 @@ export default function LenderListingForm() {
                 >
                     Back to my listings
                 </Button>
-                <Title level={2} style={{ color: "#2B2E4A", marginBottom: 4 }}>
+                <Title level={2} style={{ color: "var(--gs-heading)", marginBottom: 4 }}>
                     {isEdit ? `Edit "${item?.title ?? ""}"` : "Add a listing"}
                 </Title>
-                <Paragraph style={{ color: "#64748b" }}>
+                <Paragraph style={{ color: "var(--color-muted)" }}>
                     {isEdit
                         ? "Update details, photos, and availability for this item."
                         : "Fill in the basics first — you can add photos and set availability once it's created."}

@@ -6,7 +6,6 @@ import {
     getPublicCategories,
     getPublicCarousel,
     getTrendingItems,
-    siteLogoUrl,
     categoryIconUrl,
     carouselImageUrl,
     PublicCategory,
@@ -14,6 +13,8 @@ import {
     TrendingItem,
 } from '../features/siteContent/api/siteContentApi';
 import { itemImageUrl } from '../features/listings/api/listingsApi';
+import SiteLogoBadge from '../components/SiteLogoBadge/SiteLogoBadge';
+import ThemeToggle from '../components/ThemeToggle/ThemeToggle';
 import {
     Layout,
     Input,
@@ -160,7 +161,6 @@ const Home = () => {
 
     const isMobileOrTablet = !screens.lg;
 
-    const [logoOk, setLogoOk] = useState(true);
     const [searchValue, setSearchValue] = useState('');
     const [categories, setCategories] = useState<PublicCategory[]>([]);
     const [carouselSlides, setCarouselSlides] = useState<CarouselSlide[]>([]);
@@ -191,14 +191,14 @@ const Home = () => {
     const howItWorksData = howItWorksMode === 'renters' ? renterSteps : ownerSteps;
 
     return (
-        <Layout style={{ minHeight: '100vh', background: '#E7EEF7' }}>
+        <Layout style={{ minHeight: '100vh', background: 'var(--color-background)' }}>
             <Header
                 style={{
                     position: 'sticky',
                     top: 0,
                     zIndex: 1000,
-                    background: '#ffffff',
-                    borderBottom: '1px solid #d9e1f2',
+                    background: 'var(--gs-surface)',
+                    borderBottom: '1px solid var(--gs-border)',
                     padding: isMobileOrTablet ? '0 16px' : '0 32px',
                     height: '84px',
                     display: 'flex',
@@ -224,38 +224,14 @@ const Home = () => {
                             flexShrink: 0,
                         }}
                     >
-                        {logoOk ? (
-                            <img
-                                src={siteLogoUrl()}
-                                alt="GearShare"
-                                onError={() => setLogoOk(false)}
-                                style={{ width: 48, height: 48, borderRadius: 14, objectFit: 'contain' }}
-                            />
-                        ) : (
-                            <div
-                                style={{
-                                    width: 48,
-                                    height: 48,
-                                    borderRadius: 14,
-                                    background: '#2B2E4A',
-                                    color: '#fff',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontWeight: 700,
-                                    fontSize: 18,
-                                }}
-                            >
-                                GS
-                            </div>
-                        )}
+                        <SiteLogoBadge size={48} borderRadius={14} fallbackFontSize={18} />
 
                         <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
-                            <Text style={{ fontSize: 18, fontWeight: 700, color: '#2B2E4A' }}>
+                            <Text style={{ fontSize: 18, fontWeight: 700, color: 'var(--gs-heading)' }}>
                                 GearShare
                             </Text>
                             {!isMobileOrTablet && (
-                                <Text style={{ fontSize: 12, color: '#64748b' }}>Rent smarter</Text>
+                                <Text style={{ fontSize: 12, color: 'var(--color-muted)' }}>Rent smarter</Text>
                             )}
                         </div>
                     </div>
@@ -265,7 +241,7 @@ const Home = () => {
                         <Input
                             size="large"
                             placeholder="Search for cameras, tools, speakers..."
-                            prefix={<SearchOutlined style={{ color: '#64748b' }} />}
+                            prefix={<SearchOutlined style={{ color: 'var(--color-muted)' }} />}
                             value={searchValue}
                             onChange={(e) => setSearchValue(e.target.value)}
                             onPressEnter={() => goToBrowse({ search: searchValue })}
@@ -279,6 +255,8 @@ const Home = () => {
                     {/* Desktop actions */}
                     {!isMobileOrTablet && (
                         <Space size="middle" align="center">
+                            <ThemeToggle />
+
                             <Button type="text" style={{ fontWeight: 500 }} onClick={goToAccount}>
                                 Become a lender
                             </Button>
@@ -308,7 +286,7 @@ const Home = () => {
                     {isMobileOrTablet && (
                         <Button
                             type="text"
-                            icon={<MenuOutlined style={{ fontSize: 22, color: '#2B2E4A' }} />}
+                            icon={<MenuOutlined style={{ fontSize: 22, color: 'var(--gs-heading)' }} />}
                             onClick={() => setDrawerOpen(true)}
                             style={{
                                 width: 44,
@@ -332,6 +310,8 @@ const Home = () => {
                 width={320}
             >
                 <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                    <ThemeToggle block />
+
                     <Button type="text" block style={{ textAlign: 'left', height: 42 }} onClick={goToAccount}>
                         Become a lender
                     </Button>
@@ -358,7 +338,7 @@ const Home = () => {
                         Cart
                     </Button>
 
-                    <div style={{ borderTop: '1px solid #eef2f7', paddingTop: 12 }}>
+                    <div style={{ borderTop: '1px solid var(--gs-border)', paddingTop: 12 }}>
                         <Space direction="vertical" size="small" style={{ width: '100%' }}>
                             <Button type="text" block style={{ textAlign: 'left' }}>
                                 Categories
@@ -505,7 +485,7 @@ const Home = () => {
 
                     {/* Categories */}
                     <div style={{ marginBottom: 36 }}>
-                        <Title level={3} style={{ textAlign: 'center', color: '#2B2E4A', marginBottom: 22 }}>
+                        <Title level={3} style={{ textAlign: 'center', color: 'var(--gs-heading)', marginBottom: 22 }}>
                             Rent by Category
                         </Title>
 
@@ -541,7 +521,7 @@ const Home = () => {
                                                 height: 52,
                                                 borderRadius: 16,
                                                 background: '#eef3fb',
-                                                color: '#2B2E4A',
+                                                color: 'var(--gs-heading)',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
@@ -555,7 +535,7 @@ const Home = () => {
                                                 category.fallbackIcon || <ToolOutlined />
                                             )}
                                         </div>
-                                        <Text style={{ fontWeight: 500, color: '#2B2E4A' }}>{category.title}</Text>
+                                        <Text style={{ fontWeight: 500, color: 'var(--gs-heading)' }}>{category.title}</Text>
                                     </Card>
                                 </Col>
                             ))}
@@ -564,7 +544,7 @@ const Home = () => {
 
                     {/* Trending */}
                     <div style={{ marginBottom: 42 }}>
-                        <Title level={3} style={{ color: '#2B2E4A', marginBottom: 20 }}>
+                        <Title level={3} style={{ color: 'var(--gs-heading)', marginBottom: 20 }}>
                             <span style={{ color: '#5D79BB' }}>Trending Items</span> people love to rent
                         </Title>
 
@@ -595,7 +575,7 @@ const Home = () => {
                                                       <div style={{ width: '100%', height: 150, borderRadius: 14, background: '#eef3fb', marginBottom: 16 }} />
                                                   )}
 
-                                                  <Text style={{ display: 'block', fontWeight: 600, color: '#2B2E4A', marginBottom: 4 }}>
+                                                  <Text style={{ display: 'block', fontWeight: 600, color: 'var(--gs-heading)', marginBottom: 4 }}>
                                                       {item.title}
                                                   </Text>
 
@@ -603,7 +583,7 @@ const Home = () => {
                                                       {item.featuredUntil ? 'Featured' : item.category || 'Available now'}
                                                   </Text>
 
-                                                  <Text strong style={{ color: '#2B2E4A' }}>
+                                                  <Text strong style={{ color: 'var(--gs-heading)' }}>
                                                       {item.currency} {item.pricePerDay.toFixed(2)} / day
                                                   </Text>
                                               </Card>
@@ -613,11 +593,11 @@ const Home = () => {
                                           <Col xs={24} sm={12} md={8} key={item.title}>
                                               <Card hoverable style={{ borderRadius: 18, borderColor: '#d6def0' }}>
                                                   <div style={{ width: '100%', height: 150, borderRadius: 14, background: '#eef3fb', marginBottom: 16 }} />
-                                                  <Text style={{ display: 'block', fontWeight: 600, color: '#2B2E4A', marginBottom: 4 }}>
+                                                  <Text style={{ display: 'block', fontWeight: 600, color: 'var(--gs-heading)', marginBottom: 4 }}>
                                                       {item.title}
                                                   </Text>
                                                   <Text style={{ display: 'block', color: '#2d7a46', marginBottom: 8 }}>{item.booked}</Text>
-                                                  <Rate disabled defaultValue={3} style={{ fontSize: 14, color: '#2B2E4A' }} />
+                                                  <Rate disabled defaultValue={3} style={{ fontSize: 14, color: 'var(--gs-heading)' }} />
                                               </Card>
                                           </Col>
                                       ))}
@@ -665,7 +645,7 @@ const Home = () => {
                                                 fontSize: 42,
                                                 lineHeight: 1,
                                                 fontWeight: 700,
-                                                color: '#2B2E4A',
+                                                color: 'var(--gs-heading)',
                                             }}
                                         >
                                             {step.id}
@@ -694,7 +674,7 @@ const Home = () => {
 
                     {/* Confidence */}
                     <div style={{ marginBottom: 42 }}>
-                        <Title level={3} style={{ color: '#2B2E4A', marginBottom: 10 }}>
+                        <Title level={3} style={{ color: 'var(--gs-heading)', marginBottom: 10 }}>
                             <span style={{ color: '#5D79BB' }}>We&apos;ve got your back</span> - Everything you
                             need to rent your stuff with confidence.
                         </Title>
@@ -716,7 +696,7 @@ const Home = () => {
                                                 borderRadius: 16,
                                                 background: '#eef3fb',
                                                 border: '1px solid #d6def0',
-                                                color: '#2B2E4A',
+                                                color: 'var(--gs-heading)',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
@@ -784,7 +764,7 @@ const Home = () => {
                                                     height: 54,
                                                     borderRadius: 16,
                                                     background: '#eef3fb',
-                                                    color: '#2B2E4A',
+                                                    color: 'var(--gs-heading)',
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
@@ -820,18 +800,18 @@ const Home = () => {
 
             <Footer
                 style={{
-                    background: '#ffffff',
-                    borderTop: '1px solid #d9e1f2',
+                    background: 'var(--gs-surface)',
+                    borderTop: '1px solid var(--gs-border)',
                     padding: '32px 24px',
                 }}
             >
                 <div style={{ maxWidth: 1200, margin: '0 auto' }}>
                     <Row gutter={[24, 24]} justify="space-between">
                         <Col xs={24} md={10}>
-                            <Text style={{ display: 'block', fontSize: 18, fontWeight: 700, color: '#2B2E4A' }}>
+                            <Text style={{ display: 'block', fontSize: 18, fontWeight: 700, color: 'var(--gs-heading)' }}>
                                 GearShare
                             </Text>
-                            <Paragraph style={{ color: '#64748b', marginTop: 8, marginBottom: 0 }}>
+                            <Paragraph style={{ color: 'var(--color-muted)', marginTop: 8, marginBottom: 0 }}>
                                 Rent smarter. Share more. Access the things you need without the full cost of
                                 ownership.
                             </Paragraph>
@@ -879,7 +859,7 @@ const Home = () => {
                             textAlign: 'center',
                         }}
                     >
-                        <Text style={{ color: '#64748b' }}>© 2026 GearShare. All rights reserved.</Text>
+                        <Text style={{ color: 'var(--color-muted)' }}>© 2026 GearShare. All rights reserved.</Text>
                     </div>
                 </div>
             </Footer>

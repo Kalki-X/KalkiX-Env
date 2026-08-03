@@ -66,10 +66,10 @@ export default function Profile() {
                 >
                     Back to dashboard
                 </Button>
-                <Title level={2} style={{ color: "#2B2E4A", marginBottom: 4 }}>
+                <Title level={2} style={{ color: "var(--gs-heading)", marginBottom: 4 }}>
                     My profile
                 </Title>
-                <Paragraph style={{ color: "#64748b" }}>
+                <Paragraph style={{ color: "var(--color-muted)" }}>
                     Update your photo and phone number. Your email address can't be changed here.
                 </Paragraph>
             </div>

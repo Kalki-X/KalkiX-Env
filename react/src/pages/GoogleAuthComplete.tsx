@@ -34,7 +34,7 @@ const GoogleAuthComplete = () => {
     }, []);
 
     return (
-        <Layout style={{ minHeight: '100vh', background: '#E7EEF7' }}>
+        <Layout style={{ minHeight: '100vh', background: 'var(--color-background)' }}>
             <Content style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
                 {failed ? (
                     <Alert
@@ -50,7 +50,7 @@ const GoogleAuthComplete = () => {
                 ) : (
                     <>
                         <Spin size="large" />
-                        <Text style={{ color: '#64748b' }}>Finishing sign-in...</Text>
+                        <Text style={{ color: 'var(--color-muted)' }}>Finishing sign-in...</Text>
                     </>
                 )}
             </Content>
