@@ -36,7 +36,7 @@ interface StaffFormValues {
     lastName: string;
     email: string;
     phone?: string;
-    password: string;
+    password?: string;
     role: StaffRole;
     isRenter?: boolean;
     isLender?: boolean;
@@ -77,8 +77,13 @@ export default function SuperAdminDashboard() {
         setFormSuccess(null);
         setSubmitting(true);
         try {
-            const created = await createStaffAccount(values);
-            setFormSuccess(`${created.firstName} ${created.lastName} (${created.email}) was created as ${created.role}.`);
+            const { user: created, credentialsEmailSent } = await createStaffAccount(values);
+            setFormSuccess(
+                `${created.firstName} ${created.lastName} (${created.email}) was created as ${created.role}.` +
+                    (credentialsEmailSent
+                        ? ' They\'ve been emailed a secure link to set their own password.'
+                        : ' No email was sent — you set their password directly.')
+            );
             form.resetFields();
             loadStats(); // refresh the counts now that a new user exists
         } catch (err) {
@@ -207,11 +212,12 @@ export default function SuperAdminDashboard() {
                         </Col>
                         <Col xs={24} md={12}>
                             <Form.Item
-                                label="Temporary password"
+                                label="Password (optional)"
                                 name="password"
-                                rules={[{ required: true, min: 8, message: "At least 8 characters" }]}
+                                extra="Recommended: leave this blank. They'll be emailed a secure one-time link to set their own password instead of you handing one over directly."
+                                rules={[{ min: 8, message: "At least 8 characters" }]}
                             >
-                                <Input.Password size="large" />
+                                <Input.Password size="large" placeholder="Leave blank to email a secure set-password link" />
                             </Form.Item>
                         </Col>
                     </Row>

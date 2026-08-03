@@ -14,6 +14,7 @@ import AuditTrail from "../pages/admin/AuditTrail";
 import SalesReports from "../pages/admin/SalesReports";
 import PaymentManagement from "../pages/admin/PaymentManagement";
 import ErrorReports from "../pages/admin/ErrorReports";
+import EmailTemplates from "../pages/admin/EmailTemplates";
 import StaffDashboard from "../pages/staff/StaffDashboard";
 import StaffUserManagement from "../pages/staff/UserManagement";
 import FinanceDashboard from "../pages/finance/FinanceDashboard";
@@ -29,6 +30,7 @@ import RenterBrowse from "../pages/renter/RenterBrowse";
 import ItemDetail from "../pages/renter/ItemDetail";
 import RenterBookings from "../pages/renter/RenterBookings";
 import RenterBookingDetail from "../pages/renter/RenterBookingDetail";
+import { useAuth } from "../features/auth/context/AuthContext";
 
 const FINANCE_NAV_ITEMS: DashboardNavItem[] = [
     { key: "overview", label: "Overview", path: "/finance" },
@@ -37,12 +39,26 @@ const FINANCE_NAV_ITEMS: DashboardNavItem[] = [
     { key: "documents", label: "Documents", path: "/finance/documents" },
 ];
 
-const STAFF_NAV_ITEMS: DashboardNavItem[] = [
+// Support (unlike Admin) isn't allowed to touch email templates server-side
+// (see adminEmailTemplates.routes.js: requireRole('super_admin', 'admin')), so the
+// nav link for it is only added for Admin — see StaffLayout below, which picks
+// between these two arrays based on the logged-in user's role.
+const STAFF_NAV_ITEMS_BASE: DashboardNavItem[] = [
     { key: "overview", label: "Overview", path: "/staff" },
     { key: "users", label: "Users", path: "/staff/users" },
     { key: "documents", label: "Documents", path: "/staff/documents" },
     { key: "errors", label: "Error Reports", path: "/staff/errors" },
 ];
+const STAFF_NAV_ITEMS_ADMIN: DashboardNavItem[] = [
+    ...STAFF_NAV_ITEMS_BASE,
+    { key: "email-templates", label: "Email Templates", path: "/staff/email-templates" },
+];
+
+function StaffLayout() {
+    const { user } = useAuth();
+    const navItems = user?.role === "admin" ? STAFF_NAV_ITEMS_ADMIN : STAFF_NAV_ITEMS_BASE;
+    return <DashboardLayout title="Admin & Support" navItems={navItems} />;
+}
 
 const LENDER_NAV_ITEMS: DashboardNavItem[] = [
     { key: "overview", label: "Overview", path: "/lender" },
@@ -64,6 +80,7 @@ const ADMIN_NAV_ITEMS: DashboardNavItem[] = [
     { key: "reports", label: "Sales Reports", path: "/admin/reports" },
     { key: "payments", label: "Payments", path: "/admin/payments" },
     { key: "errors", label: "Error Reports", path: "/admin/errors" },
+    { key: "email-templates", label: "Email Templates", path: "/admin/email-templates" },
 ];
 
 export const router = createBrowserRouter([
@@ -134,6 +151,7 @@ export const router = createBrowserRouter([
                     { path: "reports", element: <SalesReports /> },
                     { path: "payments", element: <PaymentManagement /> },
                     { path: "errors", element: <ErrorReports /> },
+                    { path: "email-templates", element: <EmailTemplates /> },
                 ],
             },
         ],
@@ -143,12 +161,19 @@ export const router = createBrowserRouter([
         element: <ProtectedRoute roles={["admin", "support"]} />,
         children: [
             {
-                element: <DashboardLayout title="Admin & Support" navItems={STAFF_NAV_ITEMS} />,
+                element: <StaffLayout />,
                 children: [
                     { index: true, element: <StaffDashboard /> },
                     { path: "users", element: <StaffUserManagement /> },
                     { path: "documents", element: <DocumentLookup /> },
                     { path: "errors", element: <ErrorReports /> },
+                    {
+                        // Support can't access this — see requireRole('super_admin', 'admin')
+                        // on the backend route; redirect them to their own dashboard instead
+                        // of letting them hit a raw 403 from the API.
+                        element: <ProtectedRoute roles={["admin"]} />,
+                        children: [{ path: "email-templates", element: <EmailTemplates /> }],
+                    },
                 ],
             },
         ],

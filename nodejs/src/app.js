@@ -19,6 +19,7 @@ const adminErrorsRoutes = require('./routes/adminErrors.routes');
 const staffUsersRoutes = require('./routes/staffUsers.routes');
 const userAvatarRoutes = require('./routes/userAvatar.routes');
 const notificationsRoutes = require('./routes/notifications.routes');
+const adminEmailTemplatesRoutes = require('./routes/adminEmailTemplates.routes');
 const { errorHandler } = require('./middleware/errorHandler');
 
 const REACT_URL = process.env.REACT_URL || 'http://localhost:5173';
@@ -51,6 +52,7 @@ function createApp() {
     app.use('/api/admin/reports', adminReportsRoutes);
     app.use('/api/admin/payments', adminPaymentsRoutes);
     app.use('/api/admin/errors', adminErrorsRoutes);
+    app.use('/api/admin/email-templates', adminEmailTemplatesRoutes);
     app.use('/api/admin', adminRoutes);
     // Admin & Support's user-management view — deliberately a separate /api/staff
     // prefix (not /api/admin/*) so it's structurally impossible for it to collide

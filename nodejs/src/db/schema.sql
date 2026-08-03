@@ -239,3 +239,56 @@ CREATE TABLE IF NOT EXISTS notifications (
 );
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_user_created ON notifications(user_id, created_at DESC);
+
+-- Phase 8: admin-editable email templates. `type` is a fixed, known set of predefined
+-- emails (see EMAIL_TEMPLATE_TYPES in models/emailTemplateModel.js) rather than
+-- free-form user-created templates — every row is seeded with a sensible default below
+-- so the admin UI always has something to show/edit, and callers never need "does a
+-- custom one exist, else fall back to a hardcoded string" branching: the DB is always
+-- the source of truth. `body` holds {{placeholder}} tokens substituted at send time;
+-- available placeholders differ per type and are documented in the model, not the DB.
+CREATE TABLE IF NOT EXISTS email_templates (
+    type          TEXT PRIMARY KEY,
+    subject       TEXT NOT NULL,
+    body          TEXT NOT NULL,
+    updated_by    BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+INSERT INTO email_templates (type, subject, body) VALUES
+    (
+        'password_reset',
+        'Reset your GearShare password',
+        E'Hi {{firstName}},\n\nWe received a request to reset your GearShare password. This link expires in 1 hour.\n\nIf you didn''t request this, you can safely ignore this email.'
+    ),
+    (
+        'welcome',
+        'Welcome to GearShare, {{firstName}}!',
+        E'Hi {{firstName}},\n\nThanks for joining GearShare — you''re all set to start renting gear from others or listing your own items for rent.\n\nIf you ever have questions, just reply to this email.'
+    ),
+    (
+        'staff_credentials',
+        'Your GearShare staff account is ready',
+        E'Hi {{firstName}},\n\nAn account has been created for you on GearShare as {{role}} ({{email}}).\n\nUse the link below to set your password and sign in. This link expires in 1 hour.'
+    ),
+    (
+        'booking_requested',
+        'New booking request for "{{itemTitle}}"',
+        E'{{renterName}} requested to rent "{{itemTitle}}" from {{startDate}} to {{endDate}} ({{currency}} {{amount}}).\n\n{{noteLine}}Approve or reject this request from your GearShare dashboard.'
+    ),
+    (
+        'booking_approved',
+        'Your booking request for "{{itemTitle}}" was approved',
+        E'Good news — the lender approved your request for "{{itemTitle}}" ({{startDate}} to {{endDate}}).\n\nA proforma invoice ({{documentNumber}}) for {{currency}} {{amount}} is ready.'
+    ),
+    (
+        'booking_rejected',
+        'Your booking request for "{{itemTitle}}" was declined',
+        E'The lender declined your request for "{{itemTitle}}" ({{startDate}} to {{endDate}}).\n\nReason: {{reason}}\n\nNo payment was taken and no documents were issued for this request.'
+    ),
+    (
+        'booking_cancelled',
+        'Booking for "{{itemTitle}}" was cancelled',
+        E'The booking for "{{itemTitle}}" ({{startDate}} to {{endDate}}) was cancelled.\n\n{{creditNoteLine}}'
+    )
+ON CONFLICT (type) DO NOTHING;

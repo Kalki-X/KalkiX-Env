@@ -8,6 +8,7 @@ const { logAudit, clientIp } = require('../utils/audit');
 const { isValidEmail, isValidPassword, MIN_PASSWORD_LENGTH } = require('../utils/validators');
 const { generateOneTimeToken, hashToken } = require('../utils/tokens');
 const { sendMail } = require('../utils/mailer');
+const { renderTemplate } = require('../models/emailTemplateModel');
 
 const router = express.Router();
 const REACT_URL = process.env.REACT_URL || 'http://localhost:5173';
@@ -57,6 +58,25 @@ router.post('/register', async (req, res) => {
         metadata: { email: publicUser.email, accountType },
         ip: clientIp(req),
     });
+
+    // Best-effort — a broken mail server should never fail registration itself. The
+    // send attempt (success or failure) is still audited inside sendMail().
+    try {
+        const { subject, text, html } = await renderTemplate(
+            'welcome',
+            { firstName: publicUser.firstName, lastName: publicUser.lastName },
+            { actionUrl: REACT_URL }
+        );
+        await sendMail({
+            to: publicUser.email,
+            subject,
+            text,
+            html,
+            auditContext: { userId: publicUser.id, entityType: 'user', entityId: publicUser.id, ip: clientIp(req) },
+        });
+    } catch (err) {
+        console.error('⚠️  Failed to send welcome email:', err.message, { userId: publicUser.id });
+    }
 
     res.status(201).json({ ok: true, user: publicUser });
 });
@@ -217,10 +237,12 @@ router.post('/forgot-password', async (req, res) => {
     await createResetToken(user.id, tokenHash);
 
     const resetLink = `${REACT_URL}/reset-password?token=${token}`;
+    const { subject, text, html } = await renderTemplate('password_reset', { firstName: user.first_name }, { actionUrl: resetLink });
     await sendMail({
         to: user.email,
-        subject: 'Reset your GearShare password',
-        text: `We received a request to reset your GearShare password. This link expires in 1 hour:\n\n${resetLink}\n\nIf you didn't request this, you can safely ignore this email.`,
+        subject,
+        text,
+        html,
         auditContext: { userId: user.id, entityType: 'user', entityId: user.id, ip: clientIp(req) },
     });
 

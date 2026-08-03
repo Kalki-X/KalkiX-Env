@@ -3,7 +3,7 @@ const { pool } = require('../db/pool');
 const { attachUser, requireAuth, requireCapability } = require('../middleware/auth');
 const { logAudit, clientIp } = require('../utils/audit');
 const { sendMail } = require('../utils/mailer');
-const { bookingActionEmail } = require('../utils/emailTemplates');
+const { renderTemplate } = require('../models/emailTemplateModel');
 const { findItemById } = require('../models/itemModel');
 const { findById: findUserById } = require('../models/userModel');
 const {
@@ -158,12 +158,19 @@ router.post('/', attachUser, requireAuth, requireCapability('isRenter'), async (
     });
 
     const link = `/lender/bookings/${booking.id}`;
-    const { text, html } = bookingActionEmail({
-        intro: `${req.user.firstName} ${req.user.lastName} requested to rent "${item.title}" from ${startDate} to ${endDate} (${item.currency} ${totalAmount.toFixed(2)}).`,
-        lines: note ? [`Their note: "${note}"`] : [],
-        buttonUrl: `${REACT_URL}${link}`,
-        buttonLabel: 'View & Decide',
-    });
+    const { subject, text, html } = await renderTemplate(
+        'booking_requested',
+        {
+            renterName: `${req.user.firstName} ${req.user.lastName}`,
+            itemTitle: item.title,
+            startDate,
+            endDate,
+            currency: item.currency,
+            amount: totalAmount.toFixed(2),
+            noteLine: note ? `Their note: "${note}"\n\n` : '',
+        },
+        { actionUrl: `${REACT_URL}${link}` }
+    );
     const owner = await findUserById(item.owner_id);
     await notifyUser({
         userId: item.owner_id,
@@ -172,7 +179,7 @@ router.post('/', attachUser, requireAuth, requireCapability('isRenter'), async (
         body: `${req.user.firstName} ${req.user.lastName} · ${startDate} to ${endDate} · ${item.currency} ${totalAmount.toFixed(2)}`,
         link,
         entityId: booking.id,
-        email: owner ? { to: owner.email, subject: `New booking request for "${item.title}"`, text, html } : null,
+        email: owner ? { to: owner.email, subject, text, html } : null,
     });
 
     res.status(201).json({ ok: true, booking });
@@ -224,12 +231,18 @@ router.post('/:id/approve', attachUser, requireAuth, requireCapability('isLender
     });
 
     const link = `/renter/bookings/${booking.id}`;
-    const { text, html } = bookingActionEmail({
-        intro: `Good news — the lender approved your request for "${item.title}" (${booking.start_date} to ${booking.end_date}).`,
-        lines: [`A proforma invoice (${proforma.documentNumber}) for ${booking.currency} ${Number(booking.total_amount).toFixed(2)} is ready.`],
-        buttonUrl: `${REACT_URL}${link}`,
-        buttonLabel: 'View & Pay',
-    });
+    const { subject, text, html } = await renderTemplate(
+        'booking_approved',
+        {
+            itemTitle: item.title,
+            startDate: booking.start_date,
+            endDate: booking.end_date,
+            currency: booking.currency,
+            amount: Number(booking.total_amount).toFixed(2),
+            documentNumber: proforma.documentNumber,
+        },
+        { actionUrl: `${REACT_URL}${link}` }
+    );
     const renter = await findUserById(booking.renter_id);
     await notifyUser({
         userId: booking.renter_id,
@@ -238,7 +251,7 @@ router.post('/:id/approve', attachUser, requireAuth, requireCapability('isLender
         body: `Pay ${booking.currency} ${Number(booking.total_amount).toFixed(2)} to confirm.`,
         link,
         entityId: booking.id,
-        email: renter ? { to: renter.email, subject: `Your booking request for "${item.title}" was approved`, text, html } : null,
+        email: renter ? { to: renter.email, subject, text, html } : null,
     });
 
     res.json({ ok: true, booking: updated, document: proforma });
@@ -280,12 +293,16 @@ router.post('/:id/reject', attachUser, requireAuth, requireCapability('isLender'
     });
 
     const link = `/renter/bookings/${booking.id}`;
-    const { text, html } = bookingActionEmail({
-        intro: `The lender declined your request for "${item.title}" (${booking.start_date} to ${booking.end_date}).`,
-        lines: [`Reason: ${updated.rejectionReason}`, 'No payment was taken and no documents were issued for this request.'],
-        buttonUrl: `${REACT_URL}${link}`,
-        buttonLabel: 'View Details',
-    });
+    const { subject, text, html } = await renderTemplate(
+        'booking_rejected',
+        {
+            itemTitle: item.title,
+            startDate: booking.start_date,
+            endDate: booking.end_date,
+            reason: updated.rejectionReason,
+        },
+        { actionUrl: `${REACT_URL}${link}` }
+    );
     const renter = await findUserById(booking.renter_id);
     await notifyUser({
         userId: booking.renter_id,
@@ -294,7 +311,7 @@ router.post('/:id/reject', attachUser, requireAuth, requireCapability('isLender'
         body: `Reason: ${updated.rejectionReason}`,
         link,
         entityId: booking.id,
-        email: renter ? { to: renter.email, subject: `Your booking request for "${item.title}" was declined`, text, html } : null,
+        email: renter ? { to: renter.email, subject, text, html } : null,
     });
 
     res.json({ ok: true, booking: updated });
@@ -437,21 +454,25 @@ router.post('/:id/cancel', attachUser, requireAuth, async (req, res) => {
     if (notifyUserId && item) {
         const other = await findUserById(notifyUserId);
         const link = isRequesterRenter ? `/lender/bookings/${booking.id}` : `/renter/bookings/${booking.id}`;
-        const bodyLines = creditNote ? [`A credit note (${creditNote.documentNumber}) for ${booking.currency} ${creditNote.amount.toFixed(2)} was issued.`] : [];
-        const { text, html } = bookingActionEmail({
-            intro: `The booking for "${item.title}" (${booking.start_date} to ${booking.end_date}) was cancelled.`,
-            lines: bodyLines,
-            buttonUrl: `${REACT_URL}${link}`,
-            buttonLabel: 'View Details',
-        });
+        const creditNoteLine = creditNote ? `A credit note (${creditNote.documentNumber}) for ${booking.currency} ${creditNote.amount.toFixed(2)} was issued.` : '';
+        const { subject, text, html } = await renderTemplate(
+            'booking_cancelled',
+            {
+                itemTitle: item.title,
+                startDate: booking.start_date,
+                endDate: booking.end_date,
+                creditNoteLine,
+            },
+            { actionUrl: `${REACT_URL}${link}` }
+        );
         await notifyUser({
             userId: notifyUserId,
             type: 'booking.cancelled',
             title: `Booking for "${item.title}" was cancelled`,
-            body: bodyLines[0] || `${booking.start_date} to ${booking.end_date}`,
+            body: creditNoteLine || `${booking.start_date} to ${booking.end_date}`,
             link,
             entityId: booking.id,
-            email: other ? { to: other.email, subject: `Booking for "${item.title}" was cancelled`, text, html } : null,
+            email: other ? { to: other.email, subject, text, html } : null,
         });
     }
 

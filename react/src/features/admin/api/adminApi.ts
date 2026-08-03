@@ -26,15 +26,17 @@ export interface CreateStaffPayload {
     lastName: string;
     email: string;
     phone?: string;
-    password: string;
+    // Optional now: leave blank (recommended) to email the new staff member a secure
+    // one-time link to set their own password instead of handing one over directly.
+    password?: string;
     role: StaffRole;
     isRenter?: boolean;
     isLender?: boolean;
 }
 
-export async function createStaffAccount(payload: CreateStaffPayload) {
+export async function createStaffAccount(payload: CreateStaffPayload): Promise<{ user: PlatformUser; credentialsEmailSent: boolean }> {
     const { data } = await apiClient.post("/api/admin/users", payload);
-    return data.user;
+    return { user: data.user, credentialsEmailSent: data.credentialsEmailSent };
 }
 
 // ---------- Role management ----------

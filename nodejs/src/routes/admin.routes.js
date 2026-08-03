@@ -1,5 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const { pool } = require('../db/pool');
 const {
     findByEmail,
@@ -12,9 +13,15 @@ const {
     VALID_ROLES,
     VALID_STATUSES,
 } = require('../models/userModel');
+const { createResetToken } = require('../models/passwordResetModel');
+const { renderTemplate } = require('../models/emailTemplateModel');
 const { attachUser, requireAuth, requireRole } = require('../middleware/auth');
 const { logAudit, clientIp } = require('../utils/audit');
+const { sendMail } = require('../utils/mailer');
 const { isValidEmail, isValidPassword, MIN_PASSWORD_LENGTH } = require('../utils/validators');
+const { generateOneTimeToken } = require('../utils/tokens');
+
+const REACT_URL = process.env.REACT_URL || 'http://localhost:5173';
 
 const router = express.Router();
 
@@ -63,16 +70,24 @@ const PROVISIONABLE_ROLES = ['admin', 'support', 'finance'];
 // Super Admin provisions staff accounts here. Per spec, Admin & Support can also act
 // as a renter and/or lender on the platform, so isRenter/isLender are accepted (and
 // default to false) rather than forced either way.
+//
+// `password` is now optional. Leaving it blank is the recommended path: the account
+// gets an unusable random hash (same trick used for Google-created accounts in
+// userModel.js) and the new staff member is emailed a secure one-time link — the exact
+// same mechanism as "forgot password" — to set their own password. Nothing sensitive
+// ever travels by email that way. If a Super Admin still wants to hand a password to
+// someone directly (in person, over a call, etc.), they can type one here instead and
+// no email is sent — that hand-off happens outside the system entirely.
 router.post('/users', async (req, res) => {
     const { firstName, lastName, email, phone, password, role, isRenter, isLender } = req.body || {};
 
-    if (!firstName || !lastName || !email || !password || !role) {
+    if (!firstName || !lastName || !email || !role) {
         return res.status(400).json({ ok: false, error: 'Missing required fields' });
     }
     if (!isValidEmail(email)) {
         return res.status(400).json({ ok: false, error: 'Invalid email address' });
     }
-    if (!isValidPassword(password)) {
+    if (password && !isValidPassword(password)) {
         return res.status(400).json({ ok: false, error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters` });
     }
     if (!PROVISIONABLE_ROLES.includes(role)) {
@@ -84,7 +99,11 @@ router.post('/users', async (req, res) => {
         return res.status(409).json({ ok: false, error: 'An account with this email already exists' });
     }
 
-    const passwordHash = await bcrypt.hash(password, 12);
+    const sendCredentialsEmail = !password;
+    const passwordHash = password
+        ? await bcrypt.hash(password, 12)
+        : await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 12); // unusable until they set a real one
+
     const user = await createUser({
         firstName,
         lastName,
@@ -102,11 +121,34 @@ router.post('/users', async (req, res) => {
         action: 'admin.staff_account_created',
         entityType: 'user',
         entityId: publicUser.id,
-        metadata: { email: publicUser.email, role },
+        metadata: { email: publicUser.email, role, credentialsEmailSent: sendCredentialsEmail },
         ip: clientIp(req),
     });
 
-    res.status(201).json({ ok: true, user: publicUser });
+    if (sendCredentialsEmail) {
+        try {
+            const { token, tokenHash } = generateOneTimeToken();
+            await createResetToken(publicUser.id, tokenHash);
+            const setPasswordLink = `${REACT_URL}/reset-password?token=${token}`;
+
+            const { subject, text, html } = await renderTemplate(
+                'staff_credentials',
+                { firstName: publicUser.firstName, email: publicUser.email, role: publicUser.role },
+                { actionUrl: setPasswordLink }
+            );
+            await sendMail({
+                to: publicUser.email,
+                subject,
+                text,
+                html,
+                auditContext: { userId: req.user.id, entityType: 'user', entityId: publicUser.id, ip: clientIp(req) },
+            });
+        } catch (err) {
+            console.error('⚠️  Failed to send staff credentials email:', err.message, { userId: publicUser.id });
+        }
+    }
+
+    res.status(201).json({ ok: true, user: publicUser, credentialsEmailSent: sendCredentialsEmail });
 });
 
 // ---------- Role management ----------
