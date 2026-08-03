@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Typography, Table, Tag, Button, Space, Alert, Popconfirm, Modal, Input, Tooltip, message } from "antd";
-import { CheckOutlined, CloseOutlined, InfoCircleOutlined } from "@ant-design/icons";
+import { CheckOutlined, CloseOutlined, InfoCircleOutlined, EyeOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import {
     Booking,
@@ -34,6 +35,7 @@ const STATUS_LABEL: Record<BookingStatus, string> = {
 };
 
 export default function LenderBookings() {
+    const navigate = useNavigate();
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -161,6 +163,9 @@ export default function LenderBookings() {
                         key: "actions",
                         render: (_, b) => (
                             <Space wrap>
+                                <Button size="small" icon={<EyeOutlined />} onClick={() => navigate(`/lender/bookings/${b.id}`)}>
+                                    View
+                                </Button>
                                 {b.status === "pending_approval" && (
                                     <>
                                         <Button

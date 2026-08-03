@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import {
     Layout,
     Row,
@@ -34,6 +34,7 @@ const GOOGLE_ERROR_MESSAGES: Record<string, string> = {
 
 const Login = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { login } = useAuth();
     const [searchParams] = useSearchParams();
     const [submitting, setSubmitting] = useState(false);
@@ -62,7 +63,11 @@ const Login = () => {
                 password: values.password,
                 remember: values.remember,
             });
-            navigate(resolveHomeRoute(loggedInUser));
+            // If ProtectedRoute bounced the person here from a specific page (e.g. a
+            // "view this booking" link from a notification email), send them back to it
+            // instead of always landing on their generic dashboard home.
+            const from = (location.state as { from?: { pathname: string; search: string } } | null)?.from;
+            navigate(from ? `${from.pathname}${from.search || ""}` : resolveHomeRoute(loggedInUser));
         } catch (err) {
             setErrorMessage(getApiErrorMessage(err, 'Unable to log in. Please check your credentials.'));
         } finally {

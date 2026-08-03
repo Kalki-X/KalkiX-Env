@@ -3,12 +3,14 @@ const { pool } = require('../db/pool');
 const { attachUser, requireAuth, requireCapability } = require('../middleware/auth');
 const { logAudit, clientIp } = require('../utils/audit');
 const { sendMail } = require('../utils/mailer');
+const { bookingActionEmail } = require('../utils/emailTemplates');
 const { findItemById } = require('../models/itemModel');
 const { findById: findUserById } = require('../models/userModel');
 const {
     hasOverlap,
     createBooking,
     findBookingById,
+    findBookingWithContext,
     setBookingStatus,
     approveBooking,
     rejectBooking,
@@ -18,8 +20,10 @@ const {
 } = require('../models/bookingModel');
 const { createDocument, listDocumentsForBooking, voidDocumentsForBooking } = require('../models/documentModel');
 const { hasAvailabilityBlockOverlap } = require('../models/itemAvailabilityModel');
+const { createNotification } = require('../models/notificationModel');
 
 const router = express.Router();
+const REACT_URL = process.env.REACT_URL || 'http://localhost:5173';
 
 // Staff can see every document ever issued (including voided ones) via Document Lookup —
 // this is the same allowlist used elsewhere for "can act on behalf of the platform".
@@ -30,14 +34,23 @@ function daysBetween(startDate, endDate) {
     return Math.max(1, Math.round(ms / (1000 * 60 * 60 * 24)) + 1); // inclusive of both dates
 }
 
-// Best-effort notification — a failed/misconfigured email must never fail the request
-// that triggered it (sendMail already falls back to console logging when SMTP isn't
-// configured, but this guards against any other unexpected failure too).
-async function notify(args) {
+// Every booking-lifecycle event fires both an in-app notification (always created,
+// regardless of email deliverability — this is exactly what the notification bell reads
+// from) and an email with a direct link to the relevant booking detail page. Email
+// send success/failure is audited inside sendMail() itself; a failure here is caught so
+// a broken mail server never breaks the booking action that triggered it.
+async function notifyUser({ userId, type, title, body, link, entityId, email }) {
     try {
-        await sendMail(args);
+        await createNotification({ userId, type, title, body, link, entityType: 'booking', entityId });
     } catch (err) {
-        console.error('⚠️  Failed to send notification email:', err.message, { to: args.to, subject: args.subject });
+        console.error('⚠️  Failed to create in-app notification:', err.message, { userId, type });
+    }
+    if (email) {
+        try {
+            await sendMail({ ...email, auditContext: { userId, entityType: 'booking', entityId } });
+        } catch (err) {
+            console.error('⚠️  Failed to send notification email:', err.message, { to: email.to, subject: email.subject });
+        }
     }
 }
 
@@ -49,6 +62,25 @@ router.get('/mine', attachUser, requireAuth, async (req, res) => {
 router.get('/owner', attachUser, requireAuth, requireCapability('isLender'), async (req, res) => {
     const bookings = await listBookingsForOwner(req.user.id);
     res.json({ ok: true, bookings });
+});
+
+// Single-booking detail, powering the dedicated /lender/bookings/:id and
+// /renter/bookings/:id pages (and what the notification emails/bell link to). Returns
+// `otherParty` and `isOwner` from the requesting viewer's perspective so the frontend
+// doesn't need to re-derive which side of the booking they're on.
+router.get('/:id', attachUser, requireAuth, async (req, res) => {
+    const booking = await findBookingWithContext(req.params.id);
+    if (!booking) return res.status(404).json({ ok: false, error: 'Booking not found' });
+
+    const isStaff = STAFF_ROLES.includes(req.user.role);
+    const isOwner = booking.owner.id === req.user.id;
+    const isRenter = booking.renter.id === req.user.id;
+    if (!isOwner && !isRenter && !isStaff) {
+        return res.status(403).json({ ok: false, error: 'Not your booking' });
+    }
+
+    const otherParty = isRenter ? booking.owner : booking.renter;
+    res.json({ ok: true, booking: { ...booking, otherParty, isOwner } });
 });
 
 router.get('/:id/documents', attachUser, requireAuth, async (req, res) => {
@@ -74,7 +106,7 @@ router.get('/:id/documents', attachUser, requireAuth, async (req, res) => {
 // booking is created — no document is issued yet (that only happens once the lender
 // approves; see Phase 6 notes below). The item's current cancellation policy (if any)
 // is snapshotted onto the booking so later edits to it don't retroactively change these
-// terms. The lender is emailed so they know a decision is waiting on them.
+// terms. The lender is emailed + notified in-app, with a direct link to decide on it.
 router.post('/', attachUser, requireAuth, requireCapability('isRenter'), async (req, res) => {
     const { itemId, startDate, endDate, note } = req.body || {};
     if (!itemId || !startDate || !endDate) {
@@ -125,16 +157,23 @@ router.post('/', attachUser, requireAuth, requireCapability('isRenter'), async (
         ip: clientIp(req),
     });
 
+    const link = `/lender/bookings/${booking.id}`;
+    const { text, html } = bookingActionEmail({
+        intro: `${req.user.firstName} ${req.user.lastName} requested to rent "${item.title}" from ${startDate} to ${endDate} (${item.currency} ${totalAmount.toFixed(2)}).`,
+        lines: note ? [`Their note: "${note}"`] : [],
+        buttonUrl: `${REACT_URL}${link}`,
+        buttonLabel: 'View & Decide',
+    });
     const owner = await findUserById(item.owner_id);
-    if (owner) {
-        await notify({
-            to: owner.email,
-            subject: `New booking request for "${item.title}"`,
-            text: `${req.user.firstName} ${req.user.lastName} requested to rent "${item.title}" from ${startDate} to ${endDate} (${item.currency} ${totalAmount.toFixed(2)}).${
-                note ? `\n\nTheir note: ${note}` : ''
-            }\n\nApprove or reject this request from your GearShare dashboard.`,
-        });
-    }
+    await notifyUser({
+        userId: item.owner_id,
+        type: 'booking.requested',
+        title: `New booking request for "${item.title}"`,
+        body: `${req.user.firstName} ${req.user.lastName} · ${startDate} to ${endDate} · ${item.currency} ${totalAmount.toFixed(2)}`,
+        link,
+        entityId: booking.id,
+        email: owner ? { to: owner.email, subject: `New booking request for "${item.title}"`, text, html } : null,
+    });
 
     res.status(201).json({ ok: true, booking });
 });
@@ -184,14 +223,23 @@ router.post('/:id/approve', attachUser, requireAuth, requireCapability('isLender
         ip,
     });
 
+    const link = `/renter/bookings/${booking.id}`;
+    const { text, html } = bookingActionEmail({
+        intro: `Good news — the lender approved your request for "${item.title}" (${booking.start_date} to ${booking.end_date}).`,
+        lines: [`A proforma invoice (${proforma.documentNumber}) for ${booking.currency} ${Number(booking.total_amount).toFixed(2)} is ready.`],
+        buttonUrl: `${REACT_URL}${link}`,
+        buttonLabel: 'View & Pay',
+    });
     const renter = await findUserById(booking.renter_id);
-    if (renter) {
-        await notify({
-            to: renter.email,
-            subject: `Your booking request for "${item.title}" was approved`,
-            text: `Good news — the lender approved your request for "${item.title}" (${booking.start_date} to ${booking.end_date}).\n\nA proforma invoice (${proforma.documentNumber}) for ${booking.currency} ${Number(booking.total_amount).toFixed(2)} is ready. Head to My Bookings on GearShare to complete payment and confirm.`,
-        });
-    }
+    await notifyUser({
+        userId: booking.renter_id,
+        type: 'booking.approved',
+        title: `Your request for "${item.title}" was approved`,
+        body: `Pay ${booking.currency} ${Number(booking.total_amount).toFixed(2)} to confirm.`,
+        link,
+        entityId: booking.id,
+        email: renter ? { to: renter.email, subject: `Your booking request for "${item.title}" was approved`, text, html } : null,
+    });
 
     res.json({ ok: true, booking: updated, document: proforma });
 });
@@ -231,14 +279,23 @@ router.post('/:id/reject', attachUser, requireAuth, requireCapability('isLender'
         ip,
     });
 
+    const link = `/renter/bookings/${booking.id}`;
+    const { text, html } = bookingActionEmail({
+        intro: `The lender declined your request for "${item.title}" (${booking.start_date} to ${booking.end_date}).`,
+        lines: [`Reason: ${updated.rejectionReason}`, 'No payment was taken and no documents were issued for this request.'],
+        buttonUrl: `${REACT_URL}${link}`,
+        buttonLabel: 'View Details',
+    });
     const renter = await findUserById(booking.renter_id);
-    if (renter) {
-        await notify({
-            to: renter.email,
-            subject: `Your booking request for "${item.title}" was declined`,
-            text: `The lender declined your request for "${item.title}" (${booking.start_date} to ${booking.end_date}).\n\nReason: ${updated.rejectionReason}\n\nNo payment was taken and no documents were issued for this request.`,
-        });
-    }
+    await notifyUser({
+        userId: booking.renter_id,
+        type: 'booking.rejected',
+        title: `Your request for "${item.title}" was declined`,
+        body: `Reason: ${updated.rejectionReason}`,
+        link,
+        entityId: booking.id,
+        email: renter ? { to: renter.email, subject: `Your booking request for "${item.title}" was declined`, text, html } : null,
+    });
 
     res.json({ ok: true, booking: updated });
 });
@@ -286,6 +343,21 @@ router.post('/:id/confirm', attachUser, requireAuth, async (req, res) => {
         await logAudit({ userId: req.user.id, action: 'payment.succeeded', entityType: 'booking', entityId: booking.id, metadata: { amount: booking.total_amount }, ip });
         await logAudit({ userId: req.user.id, action: 'booking.confirmed', entityType: 'booking', entityId: booking.id, ip });
         await logAudit({ userId: req.user.id, action: 'document.generated', entityType: 'document', entityId: invoice.id, metadata: { type: invoice.type, documentNumber: invoice.documentNumber }, ip });
+
+        // Let the lender know the item is now booked and paid for — no email for this
+        // one (it's informational, not something that needs action), just the in-app
+        // notification.
+        const item = await findItemById(booking.item_id);
+        if (item) {
+            await notifyUser({
+                userId: item.owner_id,
+                type: 'booking.confirmed',
+                title: `Payment received for "${item.title}"`,
+                body: `${booking.currency} ${Number(booking.total_amount).toFixed(2)} · ${booking.start_date} to ${booking.end_date}`,
+                link: `/lender/bookings/${booking.id}`,
+                entityId: booking.id,
+            });
+        }
 
         res.json({ ok: true, booking: updated, document: invoice });
     } catch (err) {
@@ -360,18 +432,27 @@ router.post('/:id/cancel', attachUser, requireAuth, async (req, res) => {
     await logAudit({ userId: req.user.id, action: 'booking.cancelled', entityType: 'booking', entityId: booking.id, metadata: { wasConfirmed }, ip });
 
     // Let the other party know — whichever side didn't initiate the cancellation.
-    const notifyUserId = req.user.id === booking.renter_id ? item?.owner_id : booking.renter_id;
-    if (notifyUserId) {
+    const isRequesterRenter = req.user.id === booking.renter_id;
+    const notifyUserId = isRequesterRenter ? item?.owner_id : booking.renter_id;
+    if (notifyUserId && item) {
         const other = await findUserById(notifyUserId);
-        if (other) {
-            await notify({
-                to: other.email,
-                subject: `Booking for "${item?.title || 'an item'}" was cancelled`,
-                text: `The booking for "${item?.title || 'this item'}" (${booking.start_date} to ${booking.end_date}) was cancelled.${
-                    creditNote ? ` A credit note (${creditNote.documentNumber}) for ${booking.currency} ${creditNote.amount.toFixed(2)} was issued.` : ''
-                }`,
-            });
-        }
+        const link = isRequesterRenter ? `/lender/bookings/${booking.id}` : `/renter/bookings/${booking.id}`;
+        const bodyLines = creditNote ? [`A credit note (${creditNote.documentNumber}) for ${booking.currency} ${creditNote.amount.toFixed(2)} was issued.`] : [];
+        const { text, html } = bookingActionEmail({
+            intro: `The booking for "${item.title}" (${booking.start_date} to ${booking.end_date}) was cancelled.`,
+            lines: bodyLines,
+            buttonUrl: `${REACT_URL}${link}`,
+            buttonLabel: 'View Details',
+        });
+        await notifyUser({
+            userId: notifyUserId,
+            type: 'booking.cancelled',
+            title: `Booking for "${item.title}" was cancelled`,
+            body: bodyLines[0] || `${booking.start_date} to ${booking.end_date}`,
+            link,
+            entityId: booking.id,
+            email: other ? { to: other.email, subject: `Booking for "${item.title}" was cancelled`, text, html } : null,
+        });
     }
 
     res.json({ ok: true, booking: updated, document: creditNote });

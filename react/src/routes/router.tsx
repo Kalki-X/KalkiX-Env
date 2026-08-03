@@ -18,14 +18,17 @@ import StaffDashboard from "../pages/staff/StaffDashboard";
 import StaffUserManagement from "../pages/staff/UserManagement";
 import FinanceDashboard from "../pages/finance/FinanceDashboard";
 import Profile from "../pages/Profile";
+import Notifications from "../pages/Notifications";
 import LenderDashboard from "../pages/lender/LenderDashboard";
 import LenderListings from "../pages/lender/LenderListings";
 import LenderListingForm from "../pages/lender/LenderListingForm";
 import LenderBookings from "../pages/lender/LenderBookings";
+import LenderBookingDetail from "../pages/lender/LenderBookingDetail";
 import RenterDashboard from "../pages/renter/RenterDashboard";
 import RenterBrowse from "../pages/renter/RenterBrowse";
 import ItemDetail from "../pages/renter/ItemDetail";
 import RenterBookings from "../pages/renter/RenterBookings";
+import RenterBookingDetail from "../pages/renter/RenterBookingDetail";
 
 const FINANCE_NAV_ITEMS: DashboardNavItem[] = [
     { key: "overview", label: "Overview", path: "/finance" },
@@ -104,6 +107,16 @@ export const router = createBrowserRouter([
             },
         ],
     },
+    {
+        path: "/notifications",
+        element: <ProtectedRoute />,
+        children: [
+            {
+                element: <DashboardLayout title="Notifications" />,
+                children: [{ index: true, element: <Notifications /> }],
+            },
+        ],
+    },
 
     // Role-gated dashboards. Each ProtectedRoute checks auth + role/capability
     // before handing off to the shared DashboardLayout shell.
@@ -167,6 +180,7 @@ export const router = createBrowserRouter([
                     { path: "listings/new", element: <LenderListingForm /> },
                     { path: "listings/:id/edit", element: <LenderListingForm /> },
                     { path: "bookings", element: <LenderBookings /> },
+                    { path: "bookings/:id", element: <LenderBookingDetail /> },
                 ],
             },
         ],
@@ -182,6 +196,7 @@ export const router = createBrowserRouter([
                     { path: "browse", element: <RenterBrowse /> },
                     { path: "items/:id", element: <ItemDetail /> },
                     { path: "bookings", element: <RenterBookings /> },
+                    { path: "bookings/:id", element: <RenterBookingDetail /> },
                 ],
             },
         ],

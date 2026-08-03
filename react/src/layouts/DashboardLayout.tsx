@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
 import { Layout, Space, Tag, Typography, Button, Avatar, Menu, Grid, Drawer } from "antd";
-import { LogoutOutlined, ShopOutlined, UserOutlined, MenuOutlined, DashboardOutlined, ArrowLeftOutlined } from "@ant-design/icons";
+import { LogoutOutlined, ShopOutlined, UserOutlined, MenuOutlined, DashboardOutlined, ArrowLeftOutlined, BellOutlined } from "@ant-design/icons";
 import { useAuth } from "../features/auth/context/AuthContext";
 import { userAvatarUrl } from "../features/auth/api/authApi";
 import { resolveHomeRoute } from "../features/auth/utils/resolveHomeRoute";
+import NotificationBell from "../components/NotificationBell/NotificationBell";
 
 export interface DashboardNavItem {
     key: string;
@@ -114,11 +115,14 @@ export default function DashboardLayout({ title, navItems }: { title: string; na
                 </Space>
 
                 {isMobileOrTablet ? (
-                    <Button
-                        type="text"
-                        icon={<MenuOutlined style={{ fontSize: 22, color: "#2B2E4A" }} />}
-                        onClick={() => setDrawerOpen(true)}
-                    />
+                    <Space size="small" align="center">
+                        <NotificationBell />
+                        <Button
+                            type="text"
+                            icon={<MenuOutlined style={{ fontSize: 22, color: "#2B2E4A" }} />}
+                            onClick={() => setDrawerOpen(true)}
+                        />
+                    </Space>
                 ) : (
                     <Space size="middle" align="center">
                         {showRoleSwitcher && (
@@ -139,6 +143,8 @@ export default function DashboardLayout({ title, navItems }: { title: string; na
                         <Button type="text" icon={<ShopOutlined />} onClick={() => goTo("/")}>
                             View marketplace
                         </Button>
+
+                        <NotificationBell />
 
                         {identity}
 
@@ -198,6 +204,9 @@ export default function DashboardLayout({ title, navItems }: { title: string; na
                         <Space direction="vertical" size="small" style={{ width: "100%" }}>
                             <Button block type="text" style={{ textAlign: "left" }} icon={<DashboardOutlined />} onClick={() => goTo(homeRoute)}>
                                 Dashboard
+                            </Button>
+                            <Button block type="text" style={{ textAlign: "left" }} icon={<BellOutlined />} onClick={() => goTo("/notifications")}>
+                                Notifications
                             </Button>
                             <Button block type="text" style={{ textAlign: "left" }} icon={<ShopOutlined />} onClick={() => goTo("/")}>
                                 View marketplace

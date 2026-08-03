@@ -38,6 +38,17 @@ export interface Booking {
     otherParty?: { id: number; name: string; email: string };
 }
 
+// Returned only by GET /api/bookings/:id — the dedicated detail view, powering the
+// per-booking Lender/Renter pages (and what notification emails/the bell link to).
+// `isOwner`/`otherParty` are pre-computed server-side from the viewer's perspective.
+export interface BookingDetail extends Booking {
+    item: { id: number; title: string; pricePerDay: number; currency: string; pickupAddress: string | null };
+    owner: { id: number; name: string; email: string };
+    renter: { id: number; name: string; email: string };
+    otherParty: { id: number; name: string; email: string };
+    isOwner: boolean;
+}
+
 export interface BookingDocument {
     id: number;
     bookingId: number;
@@ -63,6 +74,11 @@ export async function listMyBookings(): Promise<Booking[]> {
 export async function listOwnerBookings(): Promise<Booking[]> {
     const { data } = await apiClient.get("/api/bookings/owner");
     return data.bookings;
+}
+
+export async function getBookingDetail(bookingId: number): Promise<BookingDetail> {
+    const { data } = await apiClient.get(`/api/bookings/${bookingId}`);
+    return data.booking;
 }
 
 export async function getBookingDocuments(bookingId: number): Promise<BookingDocument[]> {

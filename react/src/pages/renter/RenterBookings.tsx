@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Typography, Table, Tag, Button, Space, Alert, Popconfirm, message, Modal, Select, List } from "antd";
-import { FileTextOutlined } from "@ant-design/icons";
+import { FileTextOutlined, EyeOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import {
     Booking,
@@ -41,6 +42,7 @@ const DOC_LABEL: Record<BookingDocument["type"], string> = {
 };
 
 export default function RenterBookings() {
+    const navigate = useNavigate();
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -154,6 +156,9 @@ export default function RenterBookings() {
                         key: "actions",
                         render: (_, b) => (
                             <Space wrap>
+                                <Button size="small" icon={<EyeOutlined />} onClick={() => navigate(`/renter/bookings/${b.id}`)}>
+                                    View
+                                </Button>
                                 {b.status === "awaiting_payment" && (
                                     <Button size="small" type="primary" onClick={() => setPayingBooking(b)}>
                                         Pay

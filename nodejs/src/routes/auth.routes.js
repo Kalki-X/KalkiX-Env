@@ -221,6 +221,7 @@ router.post('/forgot-password', async (req, res) => {
         to: user.email,
         subject: 'Reset your GearShare password',
         text: `We received a request to reset your GearShare password. This link expires in 1 hour:\n\n${resetLink}\n\nIf you didn't request this, you can safely ignore this email.`,
+        auditContext: { userId: user.id, entityType: 'user', entityId: user.id, ip: clientIp(req) },
     });
 
     await logAudit({

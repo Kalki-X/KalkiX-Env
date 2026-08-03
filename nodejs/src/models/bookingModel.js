@@ -177,6 +177,41 @@ async function listBookingsForRenter(renterId) {
 }
 
 // Bookings for items owned by a given lender (join through items).
+// Single-booking detail for the dedicated Lender/Renter booking pages — returns both
+// parties (owner and renter) so the route can decide which one is "the other party" and
+// whether the viewer is allowed to act (approve/reject/cancel) without a second query.
+async function findBookingWithContext(id) {
+    const { rows } = await pool.query(
+        `SELECT b.*,
+                i.id AS item_id_full, i.title AS item_title, i.price_per_day AS item_price_per_day,
+                i.currency AS item_currency, i.pickup_address AS item_pickup_address,
+                owner.id AS owner_id, owner.first_name AS owner_first_name,
+                owner.last_name AS owner_last_name, owner.email AS owner_email,
+                renter.id AS renter_id_full, renter.first_name AS renter_first_name,
+                renter.last_name AS renter_last_name, renter.email AS renter_email
+         FROM bookings b
+         JOIN items i ON i.id = b.item_id
+         JOIN users owner ON owner.id = i.owner_id
+         JOIN users renter ON renter.id = b.renter_id
+         WHERE b.id = $1`,
+        [id]
+    );
+    const row = rows[0];
+    if (!row) return null;
+    return {
+        ...toPublicBooking(row),
+        item: {
+            id: row.item_id_full,
+            title: row.item_title,
+            pricePerDay: Number(row.item_price_per_day),
+            currency: row.item_currency,
+            pickupAddress: row.item_pickup_address,
+        },
+        owner: { id: row.owner_id, name: `${row.owner_first_name} ${row.owner_last_name}`, email: row.owner_email },
+        renter: { id: row.renter_id_full, name: `${row.renter_first_name} ${row.renter_last_name}`, email: row.renter_email },
+    };
+}
+
 async function listBookingsForOwner(ownerId) {
     const { rows } = await pool.query(
         `SELECT b.*, i.id AS item_id_full, i.title AS item_title,
@@ -201,6 +236,7 @@ module.exports = {
     approveBooking,
     rejectBooking,
     computeRefund,
+    findBookingWithContext,
     listBookedDateRanges,
     listBookingsForRenter,
     listBookingsForOwner,

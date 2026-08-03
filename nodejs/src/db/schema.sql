@@ -219,3 +219,23 @@ ALTER TABLE items ADD COLUMN IF NOT EXISTS cancellation_fee_percent NUMERIC(5, 2
 -- can still see it, which is why this is a flag rather than a delete.
 ALTER TABLE documents ADD COLUMN IF NOT EXISTS voided BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE documents ADD COLUMN IF NOT EXISTS voided_at TIMESTAMPTZ;
+
+-- Phase 7: in-app notification center. Every booking lifecycle event that triggers an
+-- email (request received, approved, rejected, cancelled, payment confirmed) also
+-- creates one of these for the recipient, so it shows up in the bell dropdown /
+-- notifications page even before (or instead of) them checking their inbox. `link` is a
+-- frontend route path (e.g. /lender/bookings/12) the bell can navigate straight to.
+CREATE TABLE IF NOT EXISTS notifications (
+    id             BIGSERIAL PRIMARY KEY,
+    user_id        BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type           TEXT NOT NULL,
+    title          TEXT NOT NULL,
+    body           TEXT,
+    link           TEXT,
+    entity_type    TEXT,
+    entity_id      TEXT,
+    read_at        TIMESTAMPTZ,
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_created ON notifications(user_id, created_at DESC);
