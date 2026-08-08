@@ -77,11 +77,16 @@ router.get('/sections/:id/image', async (req, res) => {
     res.send(image.data);
 });
 
-// Site notices (Phase 12) — active only. Shown to both logged-out visitors (homepage)
-// and logged-in platform users (dashboard header), which is why this lives on the
-// public router rather than behind auth.
-router.get('/notices', async (_req, res) => {
-    const notices = await listNotices({ activeOnly: true });
+// Site notices (Phase 12) — active only, filtered to whichever audience the caller
+// says it's rendering for. `?audience=public` (the logged-out homepage) only gets
+// notices targeted at 'public' or 'both'; `?audience=platform_users` (the logged-in
+// dashboard) only gets 'platform_users' or 'both'. Omitting it returns every active
+// notice regardless of audience. This lives on the public router (not behind auth)
+// since both the homepage and the dashboard need it, and the dashboard's own auth is
+// handled separately by whatever page embeds the banner.
+router.get('/notices', async (req, res) => {
+    const { audience } = req.query;
+    const notices = await listNotices({ activeOnly: true, audience: typeof audience === 'string' ? audience : undefined });
     res.json({ ok: true, notices });
 });
 

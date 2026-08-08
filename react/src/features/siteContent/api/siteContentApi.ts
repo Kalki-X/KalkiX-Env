@@ -40,10 +40,13 @@ export interface HomepageSection {
     active: boolean;
 }
 
+export type NoticeAudience = "platform_users" | "public" | "both";
+
 export interface SiteNotice {
     id: number;
     message: string;
     severity: "info" | "warning" | "critical";
+    audience: NoticeAudience;
     active: boolean;
     createdAt: string;
     updatedAt: string;
@@ -85,7 +88,11 @@ export async function getPublicSections(): Promise<HomepageSection[]> {
     return data.sections;
 }
 
-export async function getPublicNotices(): Promise<SiteNotice[]> {
-    const { data } = await apiClient.get("/api/site/notices");
+// `audience` scopes the request to the viewer's context — "public" for the logged-out
+// homepage, "platform_users" for the logged-in dashboard. A notice targeted at "both"
+// is always included either way. Omit it to get every active notice regardless of
+// audience.
+export async function getPublicNotices(audience?: "public" | "platform_users"): Promise<SiteNotice[]> {
+    const { data } = await apiClient.get("/api/site/notices", { params: audience ? { audience } : undefined });
     return data.notices;
 }

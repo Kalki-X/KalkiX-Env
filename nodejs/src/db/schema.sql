@@ -449,3 +449,9 @@ CREATE TABLE IF NOT EXISTS site_notices (
     updated_by  BIGINT REFERENCES users(id) ON DELETE SET NULL
 );
 CREATE INDEX IF NOT EXISTS idx_site_notices_active ON site_notices(active);
+
+-- Which crowd a notice is shown to: logged-in platform users (dashboard), public
+-- visitors (homepage), or both. Defaults to 'both' so every pre-existing notice from
+-- before this column existed keeps behaving exactly as it did (shown everywhere).
+ALTER TABLE site_notices ADD COLUMN IF NOT EXISTS audience TEXT NOT NULL DEFAULT 'both'
+    CHECK (audience IN ('platform_users', 'public', 'both'));

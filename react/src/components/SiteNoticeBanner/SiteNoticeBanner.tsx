@@ -42,16 +42,25 @@ function persistDismissedId(id: number) {
     }
 }
 
-export default function SiteNoticeBanner({ style }: { style?: React.CSSProperties }) {
+export default function SiteNoticeBanner({
+    style,
+    audience,
+}: {
+    style?: React.CSSProperties;
+    // "public" on the logged-out homepage, "platform_users" inside the authenticated
+    // dashboard shell — determines which notices are fetched (a notice targeted at
+    // "both" always comes back regardless of which one is passed).
+    audience: 'public' | 'platform_users';
+}) {
     const [notices, setNotices] = useState<SiteNotice[]>([]);
     const [dismissedIds, setDismissedIds] = useState<number[]>([]);
 
     useEffect(() => {
         setDismissedIds(getDismissedIds());
-        getPublicNotices()
+        getPublicNotices(audience)
             .then(setNotices)
             .catch(() => {});
-    }, []);
+    }, [audience]);
 
     const visible = notices.filter((n) => !dismissedIds.includes(n.id));
     if (visible.length === 0) return null;

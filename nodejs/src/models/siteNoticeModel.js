@@ -7,6 +7,9 @@ const { pool } = require('../db/pool');
 // a record of what was announced and when).
 
 const VALID_SEVERITIES = ['info', 'warning', 'critical'];
+// 'both' shows on the public homepage AND the logged-in dashboard; the other two are
+// audience-specific. Matches the CHECK constraint on site_notices.audience.
+const VALID_AUDIENCES = ['platform_users', 'public', 'both'];
 
 function toPublicNotice(row) {
     if (!row) return null;
@@ -14,15 +17,27 @@ function toPublicNotice(row) {
         id: row.id,
         message: row.message,
         severity: row.severity,
+        audience: row.audience,
         active: row.active,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
     };
 }
 
-async function listNotices({ activeOnly = false } = {}) {
-    const where = activeOnly ? 'WHERE active = true' : '';
-    const { rows } = await pool.query(`SELECT * FROM site_notices ${where} ORDER BY created_at DESC`);
+// `audience` here is the *viewer's* context ('public' for the logged-out homepage,
+// 'platform_users' for the logged-in dashboard) — a notice matches if it was targeted
+// at that exact audience, or at 'both'. Omit it (as the admin listing does) to get
+// every notice regardless of who it's targeted at.
+async function listNotices({ activeOnly = false, audience } = {}) {
+    const conditions = [];
+    const params = [];
+    if (activeOnly) conditions.push('active = true');
+    if (audience) {
+        params.push(audience);
+        conditions.push(`(audience = $${params.length} OR audience = 'both')`);
+    }
+    const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+    const { rows } = await pool.query(`SELECT * FROM site_notices ${where} ORDER BY created_at DESC`, params);
     return rows.map(toPublicNotice);
 }
 
@@ -31,15 +46,15 @@ async function findNoticeById(id) {
     return rows[0] || null;
 }
 
-async function createNotice({ message, severity }, updatedById) {
+async function createNotice({ message, severity, audience }, updatedById) {
     const { rows } = await pool.query(
-        `INSERT INTO site_notices (message, severity, updated_by) VALUES ($1, $2, $3) RETURNING *`,
-        [message, severity || 'info', updatedById]
+        `INSERT INTO site_notices (message, severity, audience, updated_by) VALUES ($1, $2, $3, $4) RETURNING *`,
+        [message, severity || 'info', audience || 'both', updatedById]
     );
     return toPublicNotice(rows[0]);
 }
 
-async function updateNotice(id, { message, severity, active }, updatedById) {
+async function updateNotice(id, { message, severity, audience, active }, updatedById) {
     const sets = [];
     const params = [];
     if (message !== undefined) {
@@ -49,6 +64,10 @@ async function updateNotice(id, { message, severity, active }, updatedById) {
     if (severity !== undefined) {
         params.push(severity);
         sets.push(`severity = $${params.length}`);
+    }
+    if (audience !== undefined) {
+        params.push(audience);
+        sets.push(`audience = $${params.length}`);
     }
     if (active !== undefined) {
         params.push(active);
@@ -71,6 +90,7 @@ async function deleteNotice(id) {
 
 module.exports = {
     VALID_SEVERITIES,
+    VALID_AUDIENCES,
     toPublicNotice,
     listNotices,
     findNoticeById,

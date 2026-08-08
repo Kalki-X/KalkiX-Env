@@ -228,7 +228,7 @@ export default function DashboardLayout({ title, navItems }: { title: string; na
 
             <Content style={{ padding: isMobileOrTablet ? 16 : 32 }}>
                 <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-                    <SiteNoticeBanner style={{ marginBottom: 20 }} />
+                    <SiteNoticeBanner audience="platform_users" style={{ marginBottom: 20 }} />
                     {overviewItem && !onOverviewPage && (
                         <Button
                             type="link"

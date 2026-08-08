@@ -365,7 +365,7 @@ const Home = () => {
 
             <Content style={{ padding: '28px 24px 60px' }}>
                 <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-                    <SiteNoticeBanner style={{ marginBottom: 20 }} />
+                    <SiteNoticeBanner audience="public" style={{ marginBottom: 20 }} />
 
                     {/* Hero */}
                     <div

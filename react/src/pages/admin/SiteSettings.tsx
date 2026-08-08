@@ -872,11 +872,18 @@ const SEVERITY_COLOR: Record<AdminNotice['severity'], string> = {
     critical: 'red',
 };
 
+const AUDIENCE_LABEL: Record<AdminNotice['audience'], string> = {
+    platform_users: 'Platform users',
+    public: 'Public',
+    both: 'Both',
+};
+
 function NoticesTab() {
     const [notices, setNotices] = useState<AdminNotice[]>([]);
     const [loading, setLoading] = useState(true);
     const [newMessage, setNewMessage] = useState('');
     const [newSeverity, setNewSeverity] = useState<AdminNotice['severity']>('info');
+    const [newAudience, setNewAudience] = useState<AdminNotice['audience']>('both');
     const [creating, setCreating] = useState(false);
 
     const load = async () => {
@@ -898,9 +905,10 @@ function NoticesTab() {
         if (!newMessage.trim()) return;
         setCreating(true);
         try {
-            await createNotice({ message: newMessage.trim(), severity: newSeverity });
+            await createNotice({ message: newMessage.trim(), severity: newSeverity, audience: newAudience });
             setNewMessage('');
             setNewSeverity('info');
+            setNewAudience('both');
             message.success('Notice posted.');
             load();
         } catch (err) {
@@ -916,6 +924,15 @@ function NoticesTab() {
             load();
         } catch (err) {
             message.error(getApiErrorMessage(err, "Couldn't update notice."));
+        }
+    };
+
+    const onAudienceChange = async (notice: AdminNotice, audience: AdminNotice['audience']) => {
+        try {
+            await updateNotice(notice.id, { audience });
+            load();
+        } catch (err) {
+            message.error(getApiErrorMessage(err, "Couldn't update audience."));
         }
     };
 
@@ -940,11 +957,20 @@ function NoticesTab() {
             <Card size="small" title="Post a notice">
                 <Space direction="vertical" style={{ width: '100%', maxWidth: 520 }}>
                     <TextArea placeholder="Notice message" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} rows={2} />
-                    <Select value={newSeverity} onChange={setNewSeverity} style={{ width: 200 }}>
-                        <Option value="info">Info</Option>
-                        <Option value="warning">Warning</Option>
-                        <Option value="critical">Critical</Option>
-                    </Select>
+                    <Space wrap>
+                        <Select value={newSeverity} onChange={setNewSeverity} style={{ width: 160 }}>
+                            <Option value="info">Info</Option>
+                            <Option value="warning">Warning</Option>
+                            <Option value="critical">Critical</Option>
+                        </Select>
+                        <Select value={newAudience} onChange={setNewAudience} style={{ width: 200 }}>
+                            {(Object.keys(AUDIENCE_LABEL) as AdminNotice['audience'][]).map((a) => (
+                                <Option key={a} value={a}>
+                                    {AUDIENCE_LABEL[a]}
+                                </Option>
+                            ))}
+                        </Select>
+                    </Space>
                     <Button type="primary" icon={<NotificationOutlined />} loading={creating} onClick={onCreate} disabled={!newMessage.trim()}>
                         Post notice
                     </Button>
@@ -963,6 +989,25 @@ function NoticesTab() {
                         key: 'severity',
                         width: 110,
                         render: (_, n) => <Tag color={SEVERITY_COLOR[n.severity]}>{n.severity}</Tag>,
+                    },
+                    {
+                        title: 'Audience',
+                        key: 'audience',
+                        width: 190,
+                        render: (_, n) => (
+                            <Select
+                                size="small"
+                                value={n.audience}
+                                onChange={(value) => onAudienceChange(n, value)}
+                                style={{ width: 170 }}
+                            >
+                                {(Object.keys(AUDIENCE_LABEL) as AdminNotice['audience'][]).map((a) => (
+                                    <Option key={a} value={a}>
+                                        {AUDIENCE_LABEL[a]}
+                                    </Option>
+                                ))}
+                            </Select>
+                        ),
                     },
                     {
                         title: 'Active',

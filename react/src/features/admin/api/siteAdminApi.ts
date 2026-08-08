@@ -74,6 +74,9 @@ export interface AdminNotice {
     id: number;
     message: string;
     severity: "info" | "warning" | "critical";
+    // Who sees this notice: logged-in platform users only, public/logged-out visitors
+    // only, or both.
+    audience: "platform_users" | "public" | "both";
     active: boolean;
     createdAt: string;
     updatedAt: string;
@@ -245,14 +248,18 @@ export async function listAdminNotices(): Promise<AdminNotice[]> {
     return data.notices;
 }
 
-export async function createNotice(payload: { message: string; severity?: AdminNotice["severity"] }): Promise<AdminNotice> {
+export async function createNotice(payload: {
+    message: string;
+    severity?: AdminNotice["severity"];
+    audience?: AdminNotice["audience"];
+}): Promise<AdminNotice> {
     const { data } = await apiClient.post("/api/admin/content/notices", payload);
     return data.notice;
 }
 
 export async function updateNotice(
     id: number,
-    payload: { message?: string; severity?: AdminNotice["severity"]; active?: boolean }
+    payload: { message?: string; severity?: AdminNotice["severity"]; audience?: AdminNotice["audience"]; active?: boolean }
 ): Promise<AdminNotice> {
     const { data } = await apiClient.patch(`/api/admin/content/notices/${id}`, payload);
     return data.notice;

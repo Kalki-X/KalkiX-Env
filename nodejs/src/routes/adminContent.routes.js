@@ -12,7 +12,7 @@ const {
     clearSectionImage,
     deleteSection,
 } = require('../models/homepageSectionModel');
-const { VALID_SEVERITIES, listNotices, findNoticeById, createNotice, updateNotice, deleteNotice } = require('../models/siteNoticeModel');
+const { VALID_SEVERITIES, VALID_AUDIENCES, listNotices, findNoticeById, createNotice, updateNotice, deleteNotice } = require('../models/siteNoticeModel');
 
 const router = express.Router();
 
@@ -116,14 +116,17 @@ router.get('/notices', async (_req, res) => {
 });
 
 router.post('/notices', async (req, res) => {
-    const { message, severity } = req.body || {};
+    const { message, severity, audience } = req.body || {};
     if (!message || !message.trim()) return res.status(400).json({ ok: false, error: 'message is required' });
     if (severity !== undefined && !VALID_SEVERITIES.includes(severity)) {
         return res.status(400).json({ ok: false, error: `severity must be one of: ${VALID_SEVERITIES.join(', ')}` });
     }
+    if (audience !== undefined && !VALID_AUDIENCES.includes(audience)) {
+        return res.status(400).json({ ok: false, error: `audience must be one of: ${VALID_AUDIENCES.join(', ')}` });
+    }
 
-    const notice = await createNotice({ message: message.trim(), severity }, req.user.id);
-    await logAudit({ userId: req.user.id, action: 'site_notice.created', entityType: 'site_notice', entityId: notice.id, metadata: { severity: notice.severity }, ip: clientIp(req) });
+    const notice = await createNotice({ message: message.trim(), severity, audience }, req.user.id);
+    await logAudit({ userId: req.user.id, action: 'site_notice.created', entityType: 'site_notice', entityId: notice.id, metadata: { severity: notice.severity, audience: notice.audience }, ip: clientIp(req) });
     res.status(201).json({ ok: true, notice });
 });
 
@@ -131,14 +134,17 @@ router.patch('/notices/:id', async (req, res) => {
     const existing = await findNoticeById(req.params.id);
     if (!existing) return res.status(404).json({ ok: false, error: 'Notice not found' });
 
-    const { message, severity, active } = req.body || {};
+    const { message, severity, audience, active } = req.body || {};
     if (message !== undefined && !message.trim()) return res.status(400).json({ ok: false, error: 'message cannot be empty' });
     if (severity !== undefined && !VALID_SEVERITIES.includes(severity)) {
         return res.status(400).json({ ok: false, error: `severity must be one of: ${VALID_SEVERITIES.join(', ')}` });
     }
+    if (audience !== undefined && !VALID_AUDIENCES.includes(audience)) {
+        return res.status(400).json({ ok: false, error: `audience must be one of: ${VALID_AUDIENCES.join(', ')}` });
+    }
 
-    const notice = await updateNotice(req.params.id, { message: message?.trim(), severity, active }, req.user.id);
-    await logAudit({ userId: req.user.id, action: 'site_notice.updated', entityType: 'site_notice', entityId: notice.id, metadata: { severity, active }, ip: clientIp(req) });
+    const notice = await updateNotice(req.params.id, { message: message?.trim(), severity, audience, active }, req.user.id);
+    await logAudit({ userId: req.user.id, action: 'site_notice.updated', entityType: 'site_notice', entityId: notice.id, metadata: { severity, audience, active }, ip: clientIp(req) });
     res.json({ ok: true, notice });
 });
 
