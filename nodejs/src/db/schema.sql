@@ -413,3 +413,39 @@ ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS company_country TEXT;
 ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS company_vat_number TEXT;
 ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS company_email TEXT;
 ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS company_phone TEXT;
+
+-- Phase 12: freeform homepage content sections. Each is a self-contained block (title +
+-- optional body text + optional image OR external video embed) rendered on the public
+-- homepage below the existing curated areas (carousel/categories/trending), in
+-- sort_order. Video is handled as an external URL (YouTube/Vimeo/direct file link)
+-- rather than an uploaded file — no binary video storage/streaming infra needed, same
+-- reasoning as keeping payment simulated rather than integrating a real provider.
+CREATE TABLE IF NOT EXISTS homepage_sections (
+    id              BIGSERIAL PRIMARY KEY,
+    title           TEXT NOT NULL,
+    body            TEXT,
+    image_mime_type TEXT,
+    image_data      BYTEA,
+    video_url       TEXT,
+    sort_order      INTEGER NOT NULL DEFAULT 0,
+    active          BOOLEAN NOT NULL DEFAULT true,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_by      BIGINT REFERENCES users(id) ON DELETE SET NULL
+);
+CREATE INDEX IF NOT EXISTS idx_homepage_sections_sort ON homepage_sections(sort_order);
+
+-- Admin-postable banner messages ("site notices") shown to platform users and public
+-- visitors alike (e.g. planned maintenance, policy changes, promotions). Multiple can
+-- exist at once — only active ones are ever shown, most-recently-created first.
+-- `severity` drives the banner's color/icon on the frontend.
+CREATE TABLE IF NOT EXISTS site_notices (
+    id          BIGSERIAL PRIMARY KEY,
+    message     TEXT NOT NULL,
+    severity    TEXT NOT NULL DEFAULT 'info' CHECK (severity IN ('info', 'warning', 'critical')),
+    active      BOOLEAN NOT NULL DEFAULT true,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_by  BIGINT REFERENCES users(id) ON DELETE SET NULL
+);
+CREATE INDEX IF NOT EXISTS idx_site_notices_active ON site_notices(active);

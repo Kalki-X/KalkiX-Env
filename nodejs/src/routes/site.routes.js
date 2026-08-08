@@ -4,6 +4,8 @@ const { listCategories, getCategoryIconWithData } = require('../models/categoryM
 const { listSlides, getSlideImageWithData } = require('../models/carouselModel');
 const { listActiveFeaturedItems } = require('../models/featuredListingModel');
 const { listActiveItems } = require('../models/itemModel');
+const { listSections, getSectionImageWithData } = require('../models/homepageSectionModel');
+const { listNotices } = require('../models/siteNoticeModel');
 
 const router = express.Router();
 
@@ -59,6 +61,28 @@ router.get('/trending', async (req, res) => {
         items = [...items, ...backfill.map((i) => ({ ...i, featuredUntil: null }))];
     }
     res.json({ ok: true, items });
+});
+
+// Freeform homepage content sections (Phase 12) — active only, in display order.
+router.get('/sections', async (_req, res) => {
+    const sections = await listSections({ activeOnly: true });
+    res.json({ ok: true, sections });
+});
+
+router.get('/sections/:id/image', async (req, res) => {
+    const image = await getSectionImageWithData(req.params.id);
+    if (!image) return res.status(404).end();
+    res.set('Content-Type', image.mimeType);
+    res.set('Cache-Control', 'public, max-age=300');
+    res.send(image.data);
+});
+
+// Site notices (Phase 12) — active only. Shown to both logged-out visitors (homepage)
+// and logged-in platform users (dashboard header), which is why this lives on the
+// public router rather than behind auth.
+router.get('/notices', async (_req, res) => {
+    const notices = await listNotices({ activeOnly: true });
+    res.json({ ok: true, notices });
 });
 
 module.exports = router;

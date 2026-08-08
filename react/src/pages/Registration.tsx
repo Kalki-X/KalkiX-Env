@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
     Layout,
     Row,
@@ -22,11 +22,13 @@ import {
     PhoneOutlined,
     GoogleOutlined,
     UserAddOutlined,
+    HomeOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../features/auth/context/AuthContext';
 import { getApiErrorMessage, apiBaseUrl } from '../services/api/client';
 import type { AccountType } from '../features/auth/api/authApi';
 import { resolveHomeRoute } from '../features/auth/utils/resolveHomeRoute';
+import SiteLogoBadge from '../components/SiteLogoBadge/SiteLogoBadge';
 
 const { Content } = Layout;
 const { Title, Text, Paragraph, Link } = Typography;
@@ -107,6 +109,10 @@ const Register = () => {
                                     justifyContent: 'center',
                                 }}
                             >
+                                <RouterLink to="/" title="Back to homepage" style={{ display: 'inline-block', marginBottom: 16 }}>
+                                    <SiteLogoBadge size={56} borderRadius={16} />
+                                </RouterLink>
+
                                 <Text
                                     style={{
                                         color: '#5D79BB',
@@ -193,6 +199,15 @@ const Register = () => {
                                     },
                                 }}
                             >
+                                <Button
+                                    type="link"
+                                    icon={<HomeOutlined />}
+                                    onClick={() => navigate('/')}
+                                    style={{ paddingLeft: 0, marginBottom: 8 }}
+                                >
+                                    Back to homepage
+                                </Button>
+
                                 <div style={{ marginBottom: 24 }}>
                                     <Title level={2} style={{ marginBottom: 8, color: 'var(--gs-heading)' }}>
                                         Registration

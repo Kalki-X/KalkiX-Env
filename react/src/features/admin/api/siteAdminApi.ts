@@ -58,6 +58,27 @@ export interface AdminCarouselSlide {
     updatedAt: string;
 }
 
+export interface AdminSection {
+    id: number;
+    title: string;
+    body: string | null;
+    hasImage: boolean;
+    videoUrl: string | null;
+    sortOrder: number;
+    active: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface AdminNotice {
+    id: number;
+    message: string;
+    severity: "info" | "warning" | "critical";
+    active: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
 export interface AdminFeaturedListing {
     id: number;
     itemId: number;
@@ -181,6 +202,64 @@ export async function replaceCarouselSlideImage(id: number, file: File): Promise
 
 export async function deleteCarouselSlide(id: number): Promise<void> {
     await apiClient.delete(`/api/admin/site/carousel/${id}`);
+}
+
+// ---------- Homepage content sections ----------
+
+export async function listAdminSections(): Promise<AdminSection[]> {
+    const { data } = await apiClient.get("/api/admin/content/sections");
+    return data.sections;
+}
+
+export async function createSection(payload: { title: string; body?: string; videoUrl?: string; sortOrder?: number }): Promise<AdminSection> {
+    const { data } = await apiClient.post("/api/admin/content/sections", payload);
+    return data.section;
+}
+
+export async function updateSection(
+    id: number,
+    payload: { title?: string; body?: string; videoUrl?: string; sortOrder?: number; active?: boolean }
+): Promise<AdminSection> {
+    const { data } = await apiClient.patch(`/api/admin/content/sections/${id}`, payload);
+    return data.section;
+}
+
+export async function uploadSectionImage(id: number, file: File): Promise<AdminSection> {
+    const data = await uploadFile(`/api/admin/content/sections/${id}/image`, "image", file);
+    return data.section;
+}
+
+export async function removeSectionImage(id: number): Promise<AdminSection> {
+    const { data } = await apiClient.delete(`/api/admin/content/sections/${id}/image`);
+    return data.section;
+}
+
+export async function deleteSection(id: number): Promise<void> {
+    await apiClient.delete(`/api/admin/content/sections/${id}`);
+}
+
+// ---------- Site notices ----------
+
+export async function listAdminNotices(): Promise<AdminNotice[]> {
+    const { data } = await apiClient.get("/api/admin/content/notices");
+    return data.notices;
+}
+
+export async function createNotice(payload: { message: string; severity?: AdminNotice["severity"] }): Promise<AdminNotice> {
+    const { data } = await apiClient.post("/api/admin/content/notices", payload);
+    return data.notice;
+}
+
+export async function updateNotice(
+    id: number,
+    payload: { message?: string; severity?: AdminNotice["severity"]; active?: boolean }
+): Promise<AdminNotice> {
+    const { data } = await apiClient.patch(`/api/admin/content/notices/${id}`, payload);
+    return data.notice;
+}
+
+export async function deleteNotice(id: number): Promise<void> {
+    await apiClient.delete(`/api/admin/content/notices/${id}`);
 }
 
 // ---------- Featured listings (oversight) ----------

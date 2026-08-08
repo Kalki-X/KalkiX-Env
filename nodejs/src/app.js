@@ -21,6 +21,8 @@ const userAvatarRoutes = require('./routes/userAvatar.routes');
 const notificationsRoutes = require('./routes/notifications.routes');
 const adminEmailTemplatesRoutes = require('./routes/adminEmailTemplates.routes');
 const adminSiteRoutes = require('./routes/adminSite.routes');
+const adminSystemRoutes = require('./routes/adminSystem.routes');
+const adminContentRoutes = require('./routes/adminContent.routes');
 const siteRoutes = require('./routes/site.routes');
 const { errorHandler } = require('./middleware/errorHandler');
 
@@ -56,6 +58,8 @@ function createApp() {
     app.use('/api/admin/errors', adminErrorsRoutes);
     app.use('/api/admin/email-templates', adminEmailTemplatesRoutes);
     app.use('/api/admin/site', adminSiteRoutes);
+    app.use('/api/admin/system', adminSystemRoutes);
+    app.use('/api/admin/content', adminContentRoutes);
     app.use('/api/admin', adminRoutes);
     // Admin & Support's user-management view — deliberately a separate /api/staff
     // prefix (not /api/admin/*) so it's structurally impossible for it to collide

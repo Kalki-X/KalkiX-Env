@@ -20,7 +20,7 @@ import {
     Row,
     Col,
 } from 'antd';
-import { UploadOutlined, DeleteOutlined, PictureOutlined, PlusOutlined, TagOutlined } from '@ant-design/icons';
+import { UploadOutlined, DeleteOutlined, PictureOutlined, PlusOutlined, TagOutlined, SaveOutlined, NotificationOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import {
     getSiteSettings,
@@ -39,18 +39,31 @@ import {
     deleteCarouselSlide,
     listFeaturedListings,
     cancelFeaturedListing,
+    listAdminSections,
+    createSection,
+    updateSection,
+    uploadSectionImage,
+    removeSectionImage,
+    deleteSection,
+    listAdminNotices,
+    createNotice,
+    updateNotice,
+    deleteNotice,
     SiteSettings as SiteSettingsType,
     ImageSpec,
     AdminCategory,
     AdminCarouselSlide,
     AdminFeaturedListing,
+    AdminSection,
+    AdminNotice,
 } from '../../features/admin/api/siteAdminApi';
-import { siteLogoUrl, categoryIconUrl, carouselImageUrl } from '../../features/siteContent/api/siteContentApi';
+import { siteLogoUrl, categoryIconUrl, carouselImageUrl, sectionImageUrl } from '../../features/siteContent/api/siteContentApi';
 import { CURRENCIES } from '../../features/listings/constants';
 import { getApiErrorMessage } from '../../services/api/client';
 
 const { Title, Paragraph, Text } = Typography;
 const { Option } = Select;
+const { TextArea } = Input;
 
 // A tiny cache-busting counter, bumped after every upload/remove, appended as a query
 // param so the browser re-fetches the image instead of showing a stale cached one at
@@ -651,6 +664,328 @@ function FeaturedListingsTab() {
     );
 }
 
+function SectionsTab() {
+    const [sections, setSections] = useState<AdminSection[]>([]);
+    const [drafts, setDrafts] = useState<Record<number, { title: string; body: string; videoUrl: string }>>({});
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState<number | null>(null);
+    const [cacheBust, bumpCacheBust] = useCacheBust();
+
+    const [newTitle, setNewTitle] = useState('');
+    const [newBody, setNewBody] = useState('');
+    const [newVideoUrl, setNewVideoUrl] = useState('');
+    const [creating, setCreating] = useState(false);
+
+    const load = async () => {
+        setLoading(true);
+        try {
+            const list = await listAdminSections();
+            setSections(list);
+            setDrafts(Object.fromEntries(list.map((s) => [s.id, { title: s.title, body: s.body || '', videoUrl: s.videoUrl || '' }])));
+        } catch (err) {
+            message.error(getApiErrorMessage(err, "Couldn't load homepage sections."));
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        load();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const onCreate = async () => {
+        if (!newTitle.trim()) return;
+        setCreating(true);
+        try {
+            await createSection({ title: newTitle.trim(), body: newBody || undefined, videoUrl: newVideoUrl || undefined });
+            setNewTitle('');
+            setNewBody('');
+            setNewVideoUrl('');
+            message.success('Section added.');
+            load();
+        } catch (err) {
+            message.error(getApiErrorMessage(err, "Couldn't create section."));
+        } finally {
+            setCreating(false);
+        }
+    };
+
+    const onSaveDraft = async (id: number) => {
+        const draft = drafts[id];
+        if (!draft || !draft.title.trim()) {
+            message.error('Title cannot be empty.');
+            return;
+        }
+        setSaving(id);
+        try {
+            await updateSection(id, { title: draft.title.trim(), body: draft.body, videoUrl: draft.videoUrl });
+            message.success('Section saved.');
+            load();
+        } catch (err) {
+            message.error(getApiErrorMessage(err, "Couldn't save section."));
+        } finally {
+            setSaving(null);
+        }
+    };
+
+    const onToggleActive = async (section: AdminSection) => {
+        try {
+            await updateSection(section.id, { active: !section.active });
+            load();
+        } catch (err) {
+            message.error(getApiErrorMessage(err, "Couldn't update section."));
+        }
+    };
+
+    const onImageSelected = async (section: AdminSection, file: File) => {
+        try {
+            await uploadSectionImage(section.id, file);
+            bumpCacheBust();
+            message.success('Image uploaded.');
+            load();
+        } catch (err) {
+            message.error(getApiErrorMessage(err, "Couldn't upload image."));
+        }
+        return false;
+    };
+
+    const onRemoveImage = async (section: AdminSection) => {
+        try {
+            await removeSectionImage(section.id);
+            bumpCacheBust();
+            message.success('Image removed.');
+            load();
+        } catch (err) {
+            message.error(getApiErrorMessage(err, "Couldn't remove image."));
+        }
+    };
+
+    const onDelete = async (section: AdminSection) => {
+        try {
+            await deleteSection(section.id);
+            message.success('Section deleted.');
+            load();
+        } catch (err) {
+            message.error(getApiErrorMessage(err, "Couldn't delete section."));
+        }
+    };
+
+    return (
+        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+            <Paragraph style={{ color: 'var(--color-muted)', marginBottom: 0 }}>
+                Freeform blocks (title + text + an image or an external video embed) rendered on the public homepage
+                below the existing marketplace areas, in the order shown here. For video, paste a shareable embed URL
+                (e.g. a YouTube "Embed" link, a Vimeo player link, or a direct .mp4 link).
+            </Paragraph>
+
+            <Card size="small" title="Add a section">
+                <Space direction="vertical" style={{ width: '100%', maxWidth: 520 }}>
+                    <Input placeholder="Title" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
+                    <TextArea placeholder="Body text (optional)" value={newBody} onChange={(e) => setNewBody(e.target.value)} rows={3} />
+                    <Input placeholder="Video embed URL (optional)" value={newVideoUrl} onChange={(e) => setNewVideoUrl(e.target.value)} />
+                    <Button type="primary" icon={<PlusOutlined />} loading={creating} onClick={onCreate} disabled={!newTitle.trim()}>
+                        Add section
+                    </Button>
+                </Space>
+            </Card>
+
+            {sections.length === 0 && !loading ? (
+                <Empty description="No homepage sections yet." />
+            ) : (
+                <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                    {sections.map((section) => {
+                        const draft = drafts[section.id] || { title: section.title, body: section.body || '', videoUrl: section.videoUrl || '' };
+                        return (
+                            <Card key={section.id} size="small">
+                                <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                                    <Space align="center" wrap>
+                                        <Tag color={section.active ? 'success' : 'default'}>{section.active ? 'Active' : 'Hidden'}</Tag>
+                                        <Switch checked={section.active} onChange={() => onToggleActive(section)} size="small" />
+                                        <Popconfirm title="Delete this section?" onConfirm={() => onDelete(section)}>
+                                            <Button size="small" danger icon={<DeleteOutlined />}>
+                                                Delete
+                                            </Button>
+                                        </Popconfirm>
+                                    </Space>
+
+                                    <Row gutter={16}>
+                                        <Col xs={24} md={section.hasImage ? 16 : 24}>
+                                            <Input
+                                                placeholder="Title"
+                                                value={draft.title}
+                                                onChange={(e) => setDrafts((prev) => ({ ...prev, [section.id]: { ...draft, title: e.target.value } }))}
+                                                style={{ marginBottom: 8 }}
+                                            />
+                                            <TextArea
+                                                placeholder="Body text"
+                                                value={draft.body}
+                                                onChange={(e) => setDrafts((prev) => ({ ...prev, [section.id]: { ...draft, body: e.target.value } }))}
+                                                rows={2}
+                                                style={{ marginBottom: 8 }}
+                                            />
+                                            <Input
+                                                placeholder="Video embed URL"
+                                                value={draft.videoUrl}
+                                                onChange={(e) => setDrafts((prev) => ({ ...prev, [section.id]: { ...draft, videoUrl: e.target.value } }))}
+                                            />
+                                        </Col>
+                                        {section.hasImage && (
+                                            <Col xs={24} md={8}>
+                                                <img
+                                                    src={`${sectionImageUrl(section.id)}?v=${cacheBust}`}
+                                                    alt={section.title}
+                                                    style={{ width: '100%', height: 100, objectFit: 'cover', borderRadius: 10, border: '1px solid var(--gs-border)' }}
+                                                />
+                                            </Col>
+                                        )}
+                                    </Row>
+
+                                    <Space wrap>
+                                        <Button type="primary" size="small" icon={<SaveOutlined />} loading={saving === section.id} onClick={() => onSaveDraft(section.id)}>
+                                            Save
+                                        </Button>
+                                        <Upload accept="image/png,image/jpeg" showUploadList={false} beforeUpload={(file) => onImageSelected(section, file)}>
+                                            <Button size="small" icon={<UploadOutlined />}>
+                                                {section.hasImage ? 'Replace image' : 'Add image'}
+                                            </Button>
+                                        </Upload>
+                                        {section.hasImage && (
+                                            <Button size="small" danger onClick={() => onRemoveImage(section)}>
+                                                Remove image
+                                            </Button>
+                                        )}
+                                    </Space>
+                                </Space>
+                            </Card>
+                        );
+                    })}
+                </Space>
+            )}
+        </Space>
+    );
+}
+
+const SEVERITY_COLOR: Record<AdminNotice['severity'], string> = {
+    info: 'blue',
+    warning: 'gold',
+    critical: 'red',
+};
+
+function NoticesTab() {
+    const [notices, setNotices] = useState<AdminNotice[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [newMessage, setNewMessage] = useState('');
+    const [newSeverity, setNewSeverity] = useState<AdminNotice['severity']>('info');
+    const [creating, setCreating] = useState(false);
+
+    const load = async () => {
+        setLoading(true);
+        try {
+            setNotices(await listAdminNotices());
+        } catch (err) {
+            message.error(getApiErrorMessage(err, "Couldn't load site notices."));
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        load();
+    }, []);
+
+    const onCreate = async () => {
+        if (!newMessage.trim()) return;
+        setCreating(true);
+        try {
+            await createNotice({ message: newMessage.trim(), severity: newSeverity });
+            setNewMessage('');
+            setNewSeverity('info');
+            message.success('Notice posted.');
+            load();
+        } catch (err) {
+            message.error(getApiErrorMessage(err, "Couldn't post notice."));
+        } finally {
+            setCreating(false);
+        }
+    };
+
+    const onToggleActive = async (notice: AdminNotice) => {
+        try {
+            await updateNotice(notice.id, { active: !notice.active });
+            load();
+        } catch (err) {
+            message.error(getApiErrorMessage(err, "Couldn't update notice."));
+        }
+    };
+
+    const onDelete = async (notice: AdminNotice) => {
+        try {
+            await deleteNotice(notice.id);
+            message.success('Notice deleted.');
+            load();
+        } catch (err) {
+            message.error(getApiErrorMessage(err, "Couldn't delete notice."));
+        }
+    };
+
+    return (
+        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+            <Paragraph style={{ color: 'var(--color-muted)', marginBottom: 0 }}>
+                Banner announcements shown to both public visitors (homepage) and logged-in platform users
+                (dashboard). Anyone can dismiss one for their current browser session — it reappears on their next
+                visit as long as it's still active.
+            </Paragraph>
+
+            <Card size="small" title="Post a notice">
+                <Space direction="vertical" style={{ width: '100%', maxWidth: 520 }}>
+                    <TextArea placeholder="Notice message" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} rows={2} />
+                    <Select value={newSeverity} onChange={setNewSeverity} style={{ width: 200 }}>
+                        <Option value="info">Info</Option>
+                        <Option value="warning">Warning</Option>
+                        <Option value="critical">Critical</Option>
+                    </Select>
+                    <Button type="primary" icon={<NotificationOutlined />} loading={creating} onClick={onCreate} disabled={!newMessage.trim()}>
+                        Post notice
+                    </Button>
+                </Space>
+            </Card>
+
+            <Table<AdminNotice>
+                rowKey="id"
+                loading={loading}
+                dataSource={notices}
+                pagination={false}
+                columns={[
+                    { title: 'Message', dataIndex: 'message' },
+                    {
+                        title: 'Severity',
+                        key: 'severity',
+                        width: 110,
+                        render: (_, n) => <Tag color={SEVERITY_COLOR[n.severity]}>{n.severity}</Tag>,
+                    },
+                    {
+                        title: 'Active',
+                        key: 'active',
+                        width: 90,
+                        render: (_, n) => <Switch checked={n.active} onChange={() => onToggleActive(n)} />,
+                    },
+                    {
+                        title: '',
+                        key: 'actions',
+                        width: 80,
+                        render: (_, n) => (
+                            <Popconfirm title="Delete this notice?" onConfirm={() => onDelete(n)}>
+                                <Button size="small" danger icon={<DeleteOutlined />} />
+                            </Popconfirm>
+                        ),
+                    },
+                ]}
+            />
+        </Space>
+    );
+}
+
 export default function SiteSettingsPage() {
     return (
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
@@ -669,6 +1004,8 @@ export default function SiteSettingsPage() {
                     { key: 'branding', label: 'Branding & Fees', children: <BrandingAndFeesTab /> },
                     { key: 'categories', label: 'Categories', children: <CategoriesTab /> },
                     { key: 'carousel', label: 'Carousel', children: <CarouselTab /> },
+                    { key: 'sections', label: 'Sections', children: <SectionsTab /> },
+                    { key: 'notices', label: 'Site Notices', children: <NoticesTab /> },
                     { key: 'featured', label: 'Featured Listings', children: <FeaturedListingsTab /> },
                 ]}
             />

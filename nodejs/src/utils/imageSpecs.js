@@ -30,6 +30,17 @@ const IMAGE_SPECS = {
         formats: ['image/jpeg', 'image/png'],
         recommendation: 'JPEG or PNG, exactly 1600×600px (8:3 ratio), under 3MB.',
     },
+    // Unlike the fixed UI slots above (logo/icon/hero carousel), a homepage content
+    // section is freeform CMS-style content — deliberately no exact-pixel requirement
+    // here (see validateImageUpload below, which only enforces dimensions when a spec
+    // actually defines width/height). The frontend renders it with object-fit: cover
+    // inside a fixed-height box, so any reasonable landscape image works.
+    homepageSection: {
+        label: 'Section image',
+        maxBytes: 3 * 1024 * 1024,
+        formats: ['image/jpeg', 'image/png'],
+        recommendation: 'JPEG or PNG, under 3MB. Landscape images around 1200×630px work best — any size is accepted and will be cropped to fit.',
+    },
 };
 
 function formatBytes(bytes) {
@@ -50,9 +61,14 @@ function validateImageUpload(file, specKey) {
     if (file.size > spec.maxBytes) {
         return `${spec.label} must be under ${formatBytes(spec.maxBytes)} (got ${formatBytes(file.size)}).`;
     }
-    const dims = getImageDimensions(file.buffer, file.mimetype);
-    if (dims && (dims.width !== spec.width || dims.height !== spec.height)) {
-        return `${spec.label} must be exactly ${spec.width}×${spec.height}px (got ${dims.width}×${dims.height}px).`;
+    // Only enforced when the spec actually pins an exact width/height (logo, category
+    // icon, hero carousel) — a spec like homepageSection that omits these skips this
+    // check entirely, allowing any dimensions.
+    if (spec.width && spec.height) {
+        const dims = getImageDimensions(file.buffer, file.mimetype);
+        if (dims && (dims.width !== spec.width || dims.height !== spec.height)) {
+            return `${spec.label} must be exactly ${spec.width}×${spec.height}px (got ${dims.width}×${dims.height}px).`;
+        }
     }
     return null;
 }

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation, Link as RouterLink } from 'react-router-dom';
 import {
     Layout,
     Row,
@@ -19,6 +19,7 @@ import {
     LockOutlined,
     GoogleOutlined,
     LoginOutlined,
+    HomeOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../features/auth/context/AuthContext';
 import { getApiErrorMessage, apiBaseUrl } from '../services/api/client';
@@ -104,7 +105,9 @@ const Login = () => {
                                 }}
                             >
                                 <div style={{ marginBottom: 24 }}>
-                                    <SiteLogoBadge size={64} borderRadius={18} fallbackBackground="rgba(255,255,255,0.16)" fallbackFontSize={22} />
+                                    <RouterLink to="/" title="Back to homepage" style={{ display: 'inline-block' }}>
+                                        <SiteLogoBadge size={64} borderRadius={18} fallbackBackground="rgba(255,255,255,0.16)" fallbackFontSize={22} />
+                                    </RouterLink>
                                 </div>
 
                                 <Title level={1} style={{ color: '#fff', marginBottom: 12 }}>
@@ -173,7 +176,10 @@ const Login = () => {
                                     },
                                 }}
                             >
-                                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                                    <Button type="link" icon={<HomeOutlined />} onClick={() => navigate('/')} style={{ paddingLeft: 0 }}>
+                                        Back to homepage
+                                    </Button>
                                     <ThemeToggle />
                                 </div>
 

@@ -16,6 +16,7 @@ import PaymentManagement from "../pages/admin/PaymentManagement";
 import ErrorReports from "../pages/admin/ErrorReports";
 import EmailTemplates from "../pages/admin/EmailTemplates";
 import SiteSettings from "../pages/admin/SiteSettings";
+import SystemSettings from "../pages/admin/SystemSettings";
 import StaffDashboard from "../pages/staff/StaffDashboard";
 import StaffUserManagement from "../pages/staff/UserManagement";
 import FinanceDashboard from "../pages/finance/FinanceDashboard";
@@ -85,6 +86,7 @@ const ADMIN_NAV_ITEMS: DashboardNavItem[] = [
     { key: "errors", label: "Error Reports", path: "/admin/errors" },
     { key: "email-templates", label: "Email Templates", path: "/admin/email-templates" },
     { key: "site-settings", label: "Homepage", path: "/admin/site-settings" },
+    { key: "system-settings", label: "System", path: "/admin/system-settings" },
 ];
 
 export const router = createBrowserRouter([
@@ -165,6 +167,7 @@ export const router = createBrowserRouter([
                     { path: "errors", element: <ErrorReports /> },
                     { path: "email-templates", element: <EmailTemplates /> },
                     { path: "site-settings", element: <SiteSettings /> },
+                    { path: "system-settings", element: <SystemSettings /> },
                 ],
             },
         ],

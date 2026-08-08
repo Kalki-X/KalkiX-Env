@@ -6,15 +6,19 @@ import {
     getPublicCategories,
     getPublicCarousel,
     getTrendingItems,
+    getPublicSections,
     categoryIconUrl,
     carouselImageUrl,
+    sectionImageUrl,
     PublicCategory,
     CarouselSlide,
     TrendingItem,
+    HomepageSection,
 } from '../features/siteContent/api/siteContentApi';
 import { itemImageUrl } from '../features/listings/api/listingsApi';
 import SiteLogoBadge from '../components/SiteLogoBadge/SiteLogoBadge';
 import ThemeToggle from '../components/ThemeToggle/ThemeToggle';
+import SiteNoticeBanner from '../components/SiteNoticeBanner/SiteNoticeBanner';
 import {
     Layout,
     Input,
@@ -165,12 +169,14 @@ const Home = () => {
     const [categories, setCategories] = useState<PublicCategory[]>([]);
     const [carouselSlides, setCarouselSlides] = useState<CarouselSlide[]>([]);
     const [trendingItems, setTrendingItems] = useState<TrendingItem[]>([]);
+    const [sections, setSections] = useState<HomepageSection[]>([]);
 
     useEffect(() => {
         document.title = 'GearShare - Home';
         getPublicCategories().then(setCategories).catch(() => {});
         getPublicCarousel().then(setCarouselSlides).catch(() => {});
         getTrendingItems(6).then(setTrendingItems).catch(() => {});
+        getPublicSections().then(setSections).catch(() => {});
     }, []);
 
     // Already signed in -> go straight to their dashboard. Signed out -> log in first.
@@ -359,6 +365,8 @@ const Home = () => {
 
             <Content style={{ padding: '28px 24px 60px' }}>
                 <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+                    <SiteNoticeBanner style={{ marginBottom: 20 }} />
+
                     {/* Hero */}
                     <div
                         style={{
@@ -795,6 +803,57 @@ const Home = () => {
                             </Row>
                         </div>
                     </div>
+
+                    {/* Admin-managed content sections (Super Admin > Homepage > Sections) */}
+                    {sections.length > 0 && (
+                        <Space direction="vertical" size={28} style={{ width: '100%', marginBottom: 30 }}>
+                            {sections.map((section) => (
+                                <div
+                                    key={section.id}
+                                    style={{
+                                        background: '#f7f4ea',
+                                        border: '1px solid #cfd8ea',
+                                        borderRadius: 20,
+                                        padding: 28,
+                                    }}
+                                >
+                                    <Row gutter={[28, 20]} align="middle">
+                                        {(section.hasImage || section.videoUrl) && (
+                                            <Col xs={24} md={10}>
+                                                {section.videoUrl ? (
+                                                    <div style={{ position: 'relative', paddingTop: '56.25%', borderRadius: 14, overflow: 'hidden' }}>
+                                                        <iframe
+                                                            src={section.videoUrl}
+                                                            title={section.title}
+                                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                            allowFullScreen
+                                                            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <img
+                                                        src={sectionImageUrl(section.id)}
+                                                        alt={section.title}
+                                                        style={{ width: '100%', height: 220, objectFit: 'cover', borderRadius: 14 }}
+                                                    />
+                                                )}
+                                            </Col>
+                                        )}
+                                        <Col xs={24} md={section.hasImage || section.videoUrl ? 14 : 24}>
+                                            <Title level={3} style={{ color: 'var(--gs-heading)', marginBottom: 12 }}>
+                                                {section.title}
+                                            </Title>
+                                            {section.body && (
+                                                <Paragraph style={{ color: '#334155', marginBottom: 0, whiteSpace: 'pre-wrap' }}>
+                                                    {section.body}
+                                                </Paragraph>
+                                            )}
+                                        </Col>
+                                    </Row>
+                                </div>
+                            ))}
+                        </Space>
+                    )}
                 </div>
             </Content>
 

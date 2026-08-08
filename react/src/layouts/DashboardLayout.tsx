@@ -8,6 +8,7 @@ import { resolveHomeRoute } from "../features/auth/utils/resolveHomeRoute";
 import NotificationBell from "../components/NotificationBell/NotificationBell";
 import SiteLogoBadge from "../components/SiteLogoBadge/SiteLogoBadge";
 import ThemeToggle from "../components/ThemeToggle/ThemeToggle";
+import SiteNoticeBanner from "../components/SiteNoticeBanner/SiteNoticeBanner";
 
 export interface DashboardNavItem {
     key: string;
@@ -227,6 +228,7 @@ export default function DashboardLayout({ title, navItems }: { title: string; na
 
             <Content style={{ padding: isMobileOrTablet ? 16 : 32 }}>
                 <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+                    <SiteNoticeBanner style={{ marginBottom: 20 }} />
                     {overviewItem && !onOverviewPage && (
                         <Button
                             type="link"
