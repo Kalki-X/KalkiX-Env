@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Typography, Input, Button, Alert, Card, Descriptions, Space, Tag } from 'antd';
-import { SearchOutlined, PrinterOutlined } from '@ant-design/icons';
+import { SearchOutlined, FilePdfOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { lookupDocument, DocumentLookupResult } from '../../features/admin/api/adminApi';
-import { getApiErrorMessage } from '../../services/api/client';
+import { getApiErrorMessage, apiBaseUrl } from '../../services/api/client';
 
 const { Title, Paragraph } = Typography;
 
@@ -81,8 +81,13 @@ export default function DocumentLookup() {
                         </Space>
                     }
                     extra={
-                        <Button icon={<PrinterOutlined />} onClick={() => window.print()}>
-                            Print / Save as PDF
+                        <Button
+                            icon={<FilePdfOutlined />}
+                            onClick={() =>
+                                window.open(`${apiBaseUrl}/api/admin/documents/${encodeURIComponent(result.documentNumber)}/pdf`, '_blank')
+                            }
+                        >
+                            Download PDF
                         </Button>
                     }
                 >

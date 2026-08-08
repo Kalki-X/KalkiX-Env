@@ -21,6 +21,20 @@ export interface SiteSettings {
     featuredListingCurrency: string;
     updatedAt: string | null;
     updatedBy: number | null;
+    // GearShare's own company/registration details (Phase 11) — shown on the
+    // right-hand "issued by" block of every generated PDF document (proforma invoice /
+    // invoice / credit note) plus its footer. Everything but companyLegalName is
+    // optional free text.
+    companyLegalName: string;
+    companyAddressLine1: string | null;
+    companyAddressLine2: string | null;
+    companyCity: string | null;
+    companyState: string | null;
+    companyPostalCode: string | null;
+    companyCountry: string | null;
+    companyVatNumber: string | null;
+    companyEmail: string | null;
+    companyPhone: string | null;
 }
 
 export interface AdminCategory {
@@ -69,6 +83,16 @@ export async function updateSiteSettings(payload: {
     platformFeePercent?: number;
     featuredListingPricePerDay?: number;
     featuredListingCurrency?: string;
+    companyLegalName?: string;
+    companyAddressLine1?: string;
+    companyAddressLine2?: string;
+    companyCity?: string;
+    companyState?: string;
+    companyPostalCode?: string;
+    companyCountry?: string;
+    companyVatNumber?: string;
+    companyEmail?: string;
+    companyPhone?: string;
 }): Promise<SiteSettings> {
     const { data } = await apiClient.put("/api/admin/site/settings", payload);
     return data.settings;

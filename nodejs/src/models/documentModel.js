@@ -71,6 +71,16 @@ async function voidDocumentsForBooking(bookingId, types) {
     return rows.map(toPublicDocument);
 }
 
+// Single-document lookup by primary key — powers the PDF-download route, which already
+// has a booking (and therefore a document id) in hand rather than a human-typed
+// document number. Returns the same shape as everything else here (including `voided`),
+// so callers must apply their own visibility rule for voided documents same as
+// listDocumentsForBooking does.
+async function findDocumentById(id) {
+    const { rows } = await pool.query('SELECT * FROM documents WHERE id = $1', [id]);
+    return toPublicDocument(rows[0]);
+}
+
 // Powers the Super Admin "look up any document by reference number" screen. Pulls in
 // the booking, item, and renter so the result is self-contained — no follow-up calls.
 async function findByDocumentNumberWithContext(documentNumber) {
@@ -122,6 +132,7 @@ module.exports = {
     createDocument,
     listDocumentsForBooking,
     voidDocumentsForBooking,
+    findDocumentById,
     findByDocumentNumberWithContext,
     toPublicDocument,
 };

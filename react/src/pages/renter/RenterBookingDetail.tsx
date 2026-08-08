@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Typography, Card, Descriptions, Tag, Button, Space, Alert, Spin, Modal, Select, List, message } from "antd";
-import { ArrowLeftOutlined } from "@ant-design/icons";
+import { ArrowLeftOutlined, FilePdfOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import {
     BookingDetail,
@@ -11,6 +11,7 @@ import {
     getBookingDocuments,
     confirmBooking,
     cancelBooking,
+    documentPdfUrl,
 } from "../../features/bookings/api/bookingsApi";
 import { getApiErrorMessage } from "../../services/api/client";
 
@@ -188,7 +189,18 @@ export default function RenterBookingDetail() {
                     dataSource={docs}
                     locale={{ emptyText: "No documents yet." }}
                     renderItem={(doc) => (
-                        <List.Item>
+                        <List.Item
+                            actions={[
+                                <Button
+                                    key="pdf"
+                                    size="small"
+                                    icon={<FilePdfOutlined />}
+                                    onClick={() => window.open(documentPdfUrl(bookingId, doc.id), "_blank")}
+                                >
+                                    Download PDF
+                                </Button>,
+                            ]}
+                        >
                             <Space direction="vertical" size={0} style={{ width: "100%" }}>
                                 <Space>
                                     <Tag>{DOC_LABEL[doc.type]}</Tag>

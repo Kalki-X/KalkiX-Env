@@ -386,3 +386,30 @@ CREATE TABLE IF NOT EXISTS featured_listings (
 );
 CREATE INDEX IF NOT EXISTS idx_featured_item ON featured_listings(item_id);
 CREATE INDEX IF NOT EXISTS idx_featured_active_window ON featured_listings(status, ends_at);
+
+-- Phase 11: professional PDF documents (proforma invoice / invoice / credit note).
+-- Optional postal address on every user — populated via the self-service profile form.
+-- Nullable throughout: a lender who hasn't filled theirs in yet just gets those lines
+-- omitted from the invoice's "From" block rather than blocking anything.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS address_line1 TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS address_line2 TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS city TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS state TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS postal_code TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS country TEXT;
+
+-- GearShare's own company/registration details, shown on the right-hand side of every
+-- generated PDF document plus its footer. Admin-configurable (Super Admin/Admin), same
+-- singleton row as the rest of site_settings. `company_legal_name` defaults to
+-- 'GearShare' so a freshly-migrated DB never renders a blank issuer block before an
+-- admin has visited Settings.
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS company_legal_name TEXT NOT NULL DEFAULT 'GearShare';
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS company_address_line1 TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS company_address_line2 TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS company_city TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS company_state TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS company_postal_code TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS company_country TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS company_vat_number TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS company_email TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS company_phone TEXT;

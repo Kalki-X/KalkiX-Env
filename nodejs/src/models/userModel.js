@@ -4,7 +4,8 @@ const { pool } = require('../db/pool');
 
 const PUBLIC_COLUMNS = `
     id, first_name, last_name, email, phone, role, is_renter, is_lender, status, created_at,
-    (avatar_data IS NOT NULL) AS has_avatar
+    (avatar_data IS NOT NULL) AS has_avatar,
+    address_line1, address_line2, city, state, postal_code, country
 `;
 
 function toPublicUser(row) {
@@ -21,6 +22,15 @@ function toPublicUser(row) {
         status: row.status,
         createdAt: row.created_at,
         hasAvatar: !!row.has_avatar,
+        // Optional postal address (Phase 11) — populated via the self-service profile
+        // form, shown on the "From" block of any PDF document where this user is the
+        // lender. All nullable; a blank profile just omits these lines on the PDF.
+        addressLine1: row.address_line1,
+        addressLine2: row.address_line2,
+        city: row.city,
+        state: row.state,
+        postalCode: row.postal_code,
+        country: row.country,
     };
 }
 
@@ -160,14 +170,29 @@ async function updateUserAdmin(id, { role, isRenter, isLender, status }) {
 }
 
 // Self-service profile edit — deliberately its own function (not a generic "update
-// user" call) that only ever touches phone. Email is the account's login identity and
-// isn't editable here at all; role/status/capabilities are Super Admin/staff-only
-// (see updateUserAdmin above) and this function has no way to touch them even if a
-// caller tried to pass extra fields through, by construction.
-async function updateOwnProfile(id, { phone }) {
+// user" call) that only ever touches phone + the optional postal address fields (Phase
+// 11, added so a lender's "From" block on a PDF document can show more than just their
+// name/email). Email is the account's login identity and isn't editable here at all;
+// role/status/capabilities are Super Admin/staff-only (see updateUserAdmin above) and
+// this function has no way to touch them even if a caller tried to pass extra fields
+// through, by construction.
+async function updateOwnProfile(id, { phone, addressLine1, addressLine2, city, state, postalCode, country }) {
     const { rows } = await pool.query(
-        `UPDATE users SET phone = $1, updated_at = now() WHERE id = $2 RETURNING ${PUBLIC_COLUMNS}`,
-        [phone ?? null, id]
+        `UPDATE users
+         SET phone = $1, address_line1 = $2, address_line2 = $3, city = $4, state = $5,
+             postal_code = $6, country = $7, updated_at = now()
+         WHERE id = $8
+         RETURNING ${PUBLIC_COLUMNS}`,
+        [
+            phone ?? null,
+            addressLine1 ?? null,
+            addressLine2 ?? null,
+            city ?? null,
+            state ?? null,
+            postalCode ?? null,
+            country ?? null,
+            id,
+        ]
     );
     return toPublicUser(rows[0]);
 }

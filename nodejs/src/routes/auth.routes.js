@@ -155,23 +155,32 @@ router.get('/me', attachUser, requireAuth, (req, res) => {
     res.json({ ok: true, user: req.user });
 });
 
-// Self-service profile edit: phone number only. Email is the login identity and is
-// deliberately not accepted here at all — changing it would need re-verification,
-// which is out of scope for now — and role/status/capabilities stay Super
-// Admin/staff-only (see admin.routes.js / staffUsers.routes.js).
+// Self-service profile edit: phone number + an optional postal address (Phase 11 —
+// the address is what shows up on the "From" block of a PDF document when this user
+// is the lender on a booking). Email is the login identity and is deliberately not
+// accepted here at all — changing it would need re-verification, which is out of scope
+// for now — and role/status/capabilities stay Super Admin/staff-only (see
+// admin.routes.js / staffUsers.routes.js).
+const PROFILE_TEXT_FIELDS = ['phone', 'addressLine1', 'addressLine2', 'city', 'state', 'postalCode', 'country'];
+
 router.patch('/me', attachUser, requireAuth, async (req, res) => {
-    const { phone } = req.body || {};
-    if (phone !== undefined && phone !== null && typeof phone !== 'string') {
-        return res.status(400).json({ ok: false, error: 'Invalid phone number' });
+    const body = req.body || {};
+    const values = {};
+    for (const field of PROFILE_TEXT_FIELDS) {
+        const value = body[field];
+        if (value !== undefined && value !== null && typeof value !== 'string') {
+            return res.status(400).json({ ok: false, error: `Invalid ${field}` });
+        }
+        values[field] = value;
     }
-    const updated = await updateOwnProfile(req.user.id, { phone });
+    const updated = await updateOwnProfile(req.user.id, values);
 
     await logAudit({
         userId: req.user.id,
         action: 'user.profile_updated',
         entityType: 'user',
         entityId: req.user.id,
-        metadata: { phone: phone || null },
+        metadata: { ...values },
         ip: clientIp(req),
     });
 

@@ -14,6 +14,24 @@ export interface AuthUser {
     status: "active" | "suspended" | "deactivated";
     createdAt: string;
     hasAvatar: boolean;
+    // Optional postal address (Phase 11) — shown on the "From" block of a PDF document
+    // whenever this user is the lender on a booking. All nullable.
+    addressLine1: string | null;
+    addressLine2: string | null;
+    city: string | null;
+    state: string | null;
+    postalCode: string | null;
+    country: string | null;
+}
+
+export interface ProfileUpdatePayload {
+    phone?: string | null;
+    addressLine1?: string | null;
+    addressLine2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postalCode?: string | null;
+    country?: string | null;
 }
 
 export interface RegisterPayload {
@@ -64,10 +82,11 @@ export async function resetPassword(token: string, password: string): Promise<st
     return data.message as string;
 }
 
-// Self-service profile edit: phone only. Email is fixed (login identity) and isn't
-// accepted by the backend even if included here — see auth.routes.js PATCH /me.
-export async function updateProfile(phone: string | null): Promise<AuthUser> {
-    const { data } = await apiClient.patch("/api/auth/me", { phone });
+// Self-service profile edit: phone + the optional postal address fields (Phase 11).
+// Email is fixed (login identity) and isn't accepted by the backend even if included
+// here — see auth.routes.js PATCH /me.
+export async function updateProfile(payload: ProfileUpdatePayload): Promise<AuthUser> {
+    const { data } = await apiClient.patch("/api/auth/me", payload);
     return data.user as AuthUser;
 }
 

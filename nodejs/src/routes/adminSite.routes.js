@@ -54,6 +54,24 @@ router.get('/settings', async (_req, res) => {
     res.json({ ok: true, settings: await getSettings(), imageSpecs: IMAGE_SPECS });
 });
 
+// Company/invoice fields shown on every generated PDF document (Phase 11) — the
+// right-hand "issued by" block plus the repeating footer. Everything here is optional
+// free text except companyLegalName, which the DB column requires (NOT NULL, so an
+// admin clearing it out entirely would otherwise surface as a raw 500 from the
+// constraint instead of a friendly validation message).
+const COMPANY_FIELDS = [
+    'companyLegalName',
+    'companyAddressLine1',
+    'companyAddressLine2',
+    'companyCity',
+    'companyState',
+    'companyPostalCode',
+    'companyCountry',
+    'companyVatNumber',
+    'companyEmail',
+    'companyPhone',
+];
+
 router.put('/settings', async (req, res) => {
     const { platformFeePercent, featuredListingPricePerDay, featuredListingCurrency } = req.body || {};
     if (platformFeePercent !== undefined && (Number(platformFeePercent) < 0 || Number(platformFeePercent) > 100)) {
@@ -62,14 +80,25 @@ router.put('/settings', async (req, res) => {
     if (featuredListingPricePerDay !== undefined && Number(featuredListingPricePerDay) < 0) {
         return res.status(400).json({ ok: false, error: 'featuredListingPricePerDay must be >= 0' });
     }
+    if (req.body?.companyLegalName !== undefined && !String(req.body.companyLegalName).trim()) {
+        return res.status(400).json({ ok: false, error: 'companyLegalName cannot be empty' });
+    }
 
-    const updated = await updateSettings({ platformFeePercent, featuredListingPricePerDay, featuredListingCurrency }, req.user.id);
+    const companyFields = {};
+    for (const field of COMPANY_FIELDS) {
+        if (req.body?.[field] !== undefined) companyFields[field] = req.body[field];
+    }
+
+    const updated = await updateSettings(
+        { platformFeePercent, featuredListingPricePerDay, featuredListingCurrency, ...companyFields },
+        req.user.id
+    );
 
     await logAudit({
         userId: req.user.id,
         action: 'site_settings.updated',
         entityType: 'site_settings',
-        metadata: { platformFeePercent, featuredListingPricePerDay, featuredListingCurrency },
+        metadata: { platformFeePercent, featuredListingPricePerDay, featuredListingCurrency, ...companyFields },
         ip: clientIp(req),
     });
 

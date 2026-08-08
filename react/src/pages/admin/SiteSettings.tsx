@@ -17,6 +17,8 @@ import {
     Tag,
     message,
     Empty,
+    Row,
+    Col,
 } from 'antd';
 import { UploadOutlined, DeleteOutlined, PictureOutlined, PlusOutlined, TagOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -97,7 +99,21 @@ function BrandingAndFeesTab() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const onSave = async (values: { platformFeePercent: number; featuredListingPricePerDay: number; featuredListingCurrency: string }) => {
+    const onSave = async (values: {
+        platformFeePercent: number;
+        featuredListingPricePerDay: number;
+        featuredListingCurrency: string;
+        companyLegalName?: string;
+        companyAddressLine1?: string;
+        companyAddressLine2?: string;
+        companyCity?: string;
+        companyState?: string;
+        companyPostalCode?: string;
+        companyCountry?: string;
+        companyVatNumber?: string;
+        companyEmail?: string;
+        companyPhone?: string;
+    }) => {
         setSaving(true);
         try {
             const updated = await updateSiteSettings(values);
@@ -182,32 +198,103 @@ function BrandingAndFeesTab() {
                 </Space>
             </Card>
 
-            <Card title="Platform fee &amp; featured-listing pricing" loading={loading}>
-                <Paragraph style={{ color: 'var(--color-muted)' }}>
-                    The platform fee is deducted from what the lender is paid out — renters are always charged exactly
-                    the listed price, so this never changes what appears on a renter's invoice.
-                </Paragraph>
-                <Form form={form} layout="vertical" onFinish={onSave} style={{ maxWidth: 420 }}>
-                    <Form.Item label="Platform fee (%)" name="platformFeePercent" rules={[{ required: true }]}>
-                        <InputNumber min={0} max={100} step={0.5} style={{ width: '100%' }} addonAfter="%" />
-                    </Form.Item>
-                    <Form.Item label="Featured-listing price per day" name="featuredListingPricePerDay" rules={[{ required: true }]}>
-                        <InputNumber min={0} step={0.5} style={{ width: '100%' }} />
-                    </Form.Item>
-                    <Form.Item label="Currency" name="featuredListingCurrency" rules={[{ required: true }]}>
-                        <Select style={{ width: '100%' }}>
-                            {CURRENCIES.map((c) => (
-                                <Option key={c} value={c}>
-                                    {c}
-                                </Option>
-                            ))}
-                        </Select>
-                    </Form.Item>
+            <Form form={form} layout="vertical" onFinish={onSave}>
+                <Card title="Platform fee &amp; featured-listing pricing" loading={loading}>
+                    <Paragraph style={{ color: 'var(--color-muted)' }}>
+                        The platform fee is deducted from what the lender is paid out — renters are always charged
+                        exactly the listed price, so this never changes what appears on a renter's invoice.
+                    </Paragraph>
+                    <Row gutter={16} style={{ maxWidth: 640 }}>
+                        <Col xs={24} sm={8}>
+                            <Form.Item label="Platform fee (%)" name="platformFeePercent" rules={[{ required: true }]}>
+                                <InputNumber min={0} max={100} step={0.5} style={{ width: '100%' }} addonAfter="%" />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24} sm={8}>
+                            <Form.Item label="Featured-listing price per day" name="featuredListingPricePerDay" rules={[{ required: true }]}>
+                                <InputNumber min={0} step={0.5} style={{ width: '100%' }} />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24} sm={8}>
+                            <Form.Item label="Currency" name="featuredListingCurrency" rules={[{ required: true }]}>
+                                <Select style={{ width: '100%' }}>
+                                    {CURRENCIES.map((c) => (
+                                        <Option key={c} value={c}>
+                                            {c}
+                                        </Option>
+                                    ))}
+                                </Select>
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                </Card>
+
+                <Card title="Company / invoice details" loading={loading} style={{ marginTop: 24 }}>
+                    <Paragraph style={{ color: 'var(--color-muted)' }}>
+                        Shown on every proforma invoice, invoice, and credit note PDF — on the right-hand "issued by"
+                        block and repeated in the footer. The lender's own details are pulled automatically from
+                        their profile and shown on the left of each document.
+                    </Paragraph>
+                    <Row gutter={16} style={{ maxWidth: 640 }}>
+                        <Col xs={24} sm={12}>
+                            <Form.Item label="Legal company name" name="companyLegalName" rules={[{ required: true, message: 'Company name is required' }]}>
+                                <Input placeholder="GearShare Inc." />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24} sm={12}>
+                            <Form.Item label="VAT / Tax number" name="companyVatNumber">
+                                <Input placeholder="e.g. US123456789" />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24}>
+                            <Form.Item label="Address line 1" name="companyAddressLine1">
+                                <Input placeholder="Street address" />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24}>
+                            <Form.Item label="Address line 2" name="companyAddressLine2">
+                                <Input placeholder="Suite / floor (optional)" />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24} sm={8}>
+                            <Form.Item label="City" name="companyCity">
+                                <Input />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24} sm={8}>
+                            <Form.Item label="State / Province" name="companyState">
+                                <Input />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24} sm={8}>
+                            <Form.Item label="Postal / pin code" name="companyPostalCode">
+                                <Input />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24} sm={12}>
+                            <Form.Item label="Country" name="companyCountry">
+                                <Input />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24} sm={6}>
+                            <Form.Item label="Support email" name="companyEmail" rules={[{ type: 'email', message: 'Enter a valid email' }]}>
+                                <Input placeholder="billing@gearshare.example" />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24} sm={6}>
+                            <Form.Item label="Phone" name="companyPhone">
+                                <Input />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                </Card>
+
+                <Form.Item style={{ marginTop: 16, marginBottom: 0 }}>
                     <Button type="primary" htmlType="submit" loading={saving}>
                         Save
                     </Button>
-                </Form>
-            </Card>
+                </Form.Item>
+            </Form>
         </Space>
     );
 }

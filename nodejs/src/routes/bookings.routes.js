@@ -18,10 +18,11 @@ const {
     listBookingsForRenter,
     listBookingsForOwner,
 } = require('../models/bookingModel');
-const { createDocument, listDocumentsForBooking, voidDocumentsForBooking } = require('../models/documentModel');
+const { createDocument, listDocumentsForBooking, voidDocumentsForBooking, findDocumentById } = require('../models/documentModel');
 const { hasAvailabilityBlockOverlap } = require('../models/itemAvailabilityModel');
 const { createNotification } = require('../models/notificationModel');
-const { getRawSettings } = require('../models/siteSettingsModel');
+const { getRawSettings, getSettings, getLogoWithData } = require('../models/siteSettingsModel');
+const { buildDocumentPdf } = require('../utils/pdf/documentPdf');
 
 const router = express.Router();
 const REACT_URL = process.env.REACT_URL || 'http://localhost:5173';
@@ -101,6 +102,66 @@ router.get('/:id/documents', attachUser, requireAuth, async (req, res) => {
     // after payment).
     const documents = await listDocumentsForBooking(booking.id, { includeVoided: isStaff });
     res.json({ ok: true, documents });
+});
+
+// Renders one specific document (proforma invoice / invoice / credit note) as a
+// professional PDF — same access rule as the list above (renter, the item's owner, or
+// staff), plus: a voided document (superseded by a credit note) 404s for anyone who
+// isn't staff, matching the visibility rule listDocumentsForBooking already applies to
+// the JSON list. The auth cookie rides along automatically on a normal browser
+// navigation/window.open to this URL (it's `withCredentials`/sameSite=lax, not a
+// bearer token), so the frontend can just link straight here.
+router.get('/:id/documents/:documentId/pdf', attachUser, requireAuth, async (req, res) => {
+    const booking = await findBookingById(req.params.id);
+    if (!booking) return res.status(404).json({ ok: false, error: 'Booking not found' });
+
+    const isStaff = STAFF_ROLES.includes(req.user.role);
+    const item = await findItemById(booking.item_id);
+    const isOwner = item && item.owner_id === req.user.id;
+    if (booking.renter_id !== req.user.id && !isOwner && !isStaff) {
+        return res.status(403).json({ ok: false, error: 'Not your booking' });
+    }
+
+    const document = await findDocumentById(req.params.documentId);
+    if (!document || document.bookingId !== booking.id) {
+        return res.status(404).json({ ok: false, error: 'Document not found' });
+    }
+    if (document.voided && !isStaff) {
+        return res.status(404).json({ ok: false, error: 'Document not found' });
+    }
+
+    const [lender, renter, company, logo] = await Promise.all([
+        item ? findUserById(item.owner_id) : null,
+        findUserById(booking.renter_id),
+        getSettings(),
+        getLogoWithData(),
+    ]);
+
+    const pdfBuffer = await buildDocumentPdf({
+        document,
+        booking: { id: booking.id, startDate: booking.start_date, endDate: booking.end_date },
+        item: { title: item ? item.title : 'Item' },
+        lender,
+        renter,
+        company,
+        logo,
+    });
+
+    await logAudit({
+        userId: req.user.id,
+        action: 'document.pdf_downloaded',
+        entityType: 'document',
+        entityId: document.id,
+        metadata: { type: document.type, documentNumber: document.documentNumber, bookingId: booking.id },
+        ip: clientIp(req),
+    });
+
+    res.set('Content-Type', 'application/pdf');
+    // `inline` (not `attachment`) so it opens in a new tab by default — the download
+    // icon in most PDF viewers still lets someone save it, this just avoids forcing a
+    // download dialog for what's often just a quick look.
+    res.set('Content-Disposition', `inline; filename="${document.documentNumber}.pdf"`);
+    res.send(pdfBuffer);
 });
 
 // Step 1: renter requests a booking. Availability is checked and a 'pending_approval'

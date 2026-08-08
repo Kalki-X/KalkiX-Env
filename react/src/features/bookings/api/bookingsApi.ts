@@ -1,4 +1,4 @@
-import { apiClient } from "../../../services/api/client";
+import { apiClient, apiBaseUrl } from "../../../services/api/client";
 
 // A request now starts life as 'pending_approval' and only becomes 'awaiting_payment'
 // once the lender approves it (or 'rejected', terminal, if they decline). 'confirmed' /
@@ -84,6 +84,14 @@ export async function getBookingDetail(bookingId: number): Promise<BookingDetail
 export async function getBookingDocuments(bookingId: number): Promise<BookingDocument[]> {
     const { data } = await apiClient.get(`/api/bookings/${bookingId}/documents`);
     return data.documents;
+}
+
+// A plain URL, not an axios call — opened directly in a new tab (window.open) so the
+// browser renders the PDF itself. The httpOnly auth cookie rides along automatically on
+// a normal navigation (it's withCredentials/sameSite=lax, not a bearer token), so no
+// token needs to be embedded in the URL.
+export function documentPdfUrl(bookingId: number, documentId: number): string {
+    return `${apiBaseUrl}/api/bookings/${bookingId}/documents/${documentId}/pdf`;
 }
 
 // No document comes back here anymore — a request no longer issues a proforma invoice
