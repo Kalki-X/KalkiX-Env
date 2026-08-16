@@ -27,8 +27,14 @@ services:
   - type: web
     name: gearshare-api
     runtime: docker
-    dockerfilePath: ./nodejs/Dockerfile
-    dockerContext: ./nodejs
+    # rootDir scopes this service to nodejs/ — dockerfilePath and dockerContext
+    # below are resolved relative to it, not the repo root. (Setting
+    # dockerContext to a subdirectory without a matching rootDir is a known
+    # source of "failed to read dockerfile: open Dockerfile: no such file or
+    # directory" build errors on Render.)
+    rootDir: nodejs
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     plan: free
     region: oregon
     healthCheckPath: /api/ping
