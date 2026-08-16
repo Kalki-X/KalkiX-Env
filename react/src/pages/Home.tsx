@@ -27,7 +27,6 @@ import {
     Row,
     Col,
     Space,
-    Badge,
     Typography,
     Card,
     Segmented,
@@ -37,7 +36,6 @@ import {
 } from 'antd';
 import {
     SearchOutlined,
-    ShoppingCartOutlined,
     CameraOutlined,
     ToolOutlined,
     SkinOutlined,
@@ -281,10 +279,6 @@ const Home = () => {
                             >
                                 Start Renting
                             </Button>
-
-                            <Badge count={2} size="small">
-                                <Button shape="circle" icon={<ShoppingCartOutlined />} size="large" />
-                            </Badge>
                         </Space>
                     )}
 
@@ -334,14 +328,6 @@ const Home = () => {
                         onClick={goToAccount}
                     >
                         Start Renting
-                    </Button>
-
-                    <Button
-                        block
-                        icon={<ShoppingCartOutlined />}
-                        style={{ textAlign: 'left', height: 42 }}
-                    >
-                        Cart
                     </Button>
 
                     <div style={{ borderTop: '1px solid var(--gs-border)', paddingTop: 12 }}>
