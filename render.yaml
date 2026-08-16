@@ -1,0 +1,99 @@
+# Render Blueprint for GearShare — deploys the API (Docker), the React SPA
+# (static site), and a managed Postgres database in one pass. In the Render
+# dashboard: New -> Blueprint -> point at this repo.
+#
+# FREE-TIER CAVEATS (fine for a demo, not for production):
+#   - Free web services spin down after 15 min idle; the first request after
+#     that takes ~30-60s to wake up.
+#   - Free Postgres databases are deleted after ~30 days. For anything
+#     longer-lived, change `plan: free` to a paid plan below.
+#
+# MANUAL STEP AFTER FIRST DEPLOY:
+#   Render assigns each service's public URL at creation time (typically
+#   https://<name>.onrender.com, but it can differ if that name is taken).
+#   The REACT_URL, VITE_API_URL, and GOOGLE_CALLBACK_URL values below are
+#   *predicted* from the service names — after the first deploy, confirm the
+#   real URLs in the Render dashboard and update these env vars (and your
+#   Google OAuth client's authorized redirect URIs) if they differ, then
+#   redeploy.
+
+databases:
+  - name: gearshare-db
+    plan: free
+    region: oregon
+
+services:
+  # ---- API (Express, Dockerized) ----
+  - type: web
+    name: gearshare-api
+    runtime: docker
+    dockerfilePath: ./nodejs/Dockerfile
+    dockerContext: ./nodejs
+    plan: free
+    region: oregon
+    healthCheckPath: /api/ping
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Render's managed connection string for the database above.
+      - key: POSTGRES_URL
+        fromDatabase:
+          name: gearshare-db
+          property: connectionString
+      # Generated once by Render at creation time; not visible after that
+      # except in the dashboard's "Environment" tab.
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 1d
+      - key: JWT_REMEMBER_EXPIRES_IN
+        value: 30d
+      # Render terminates TLS in front of the service, so cookies marked
+      # Secure work correctly here even though the app itself speaks plain HTTP.
+      - key: COOKIE_SECURE
+        value: "true"
+      # Predicted URL of the static site below — verify after first deploy (see note up top).
+      - key: REACT_URL
+        value: https://gearshare-web.onrender.com
+      # Prompted for in the Render dashboard on first deploy; not stored in this file.
+      - key: SUPER_ADMIN_EMAIL
+        sync: false
+      - key: SUPER_ADMIN_PASSWORD
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: MAIL_FROM
+        value: "GearShare <no-reply@gearshare.local>"
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      # Predicted URL of this same service — verify after first deploy (see note up top).
+      - key: GOOGLE_CALLBACK_URL
+        value: https://gearshare-api.onrender.com/api/auth/google/callback
+
+  # ---- Frontend (Vite React SPA, static hosting) ----
+  - type: web
+    runtime: static
+    name: gearshare-web
+    rootDir: react
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    plan: free
+    region: oregon
+    # Client-side routing: any path not matching a real file falls back to
+    # index.html so React Router can take over.
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      # Predicted URL of the API service above — verify after first deploy (see note up top).
+      - key: VITE_API_URL
+        value: https://gearshare-api.onrender.com
