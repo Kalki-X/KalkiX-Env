@@ -370,7 +370,12 @@ const Home = () => {
                                         <div
                                             onClick={() => slide.linkUrl && (window.location.href = slide.linkUrl)}
                                             style={{
-                                                height: 280,
+                                                // Carousel images are uploaded at a fixed 1600×600 (8:3) spec — matching
+                                                // that ratio here (instead of a fixed pixel height) means the full image
+                                                // scales down proportionally on narrow screens instead of getting
+                                                // cropped/zoomed by backgroundSize: cover against a mismatched box shape.
+                                                width: '100%',
+                                                aspectRatio: '8 / 3',
                                                 borderRadius: 16,
                                                 backgroundImage: `linear-gradient(rgba(43,46,74,0.45), rgba(43,46,74,0.45)), url(${carouselImageUrl(slide.id)})`,
                                                 backgroundSize: 'cover',
