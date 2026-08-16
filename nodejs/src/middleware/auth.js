@@ -26,18 +26,31 @@ function signToken(user, { rememberMe = false } = {}) {
     });
 }
 
+const COOKIE_SECURE = process.env.COOKIE_SECURE === 'true';
+// The React app and API are deployed as separate origins (e.g. gearshare-web
+// vs gearshare-api on Render), so this cookie is sent on cross-site fetch/XHR
+// requests, not just same-site or top-level navigations. Browsers only deliver
+// cookies in that case if SameSite=None, which in turn requires Secure — so
+// tie the two together off the same COOKIE_SECURE flag. Locally (COOKIE_SECURE
+// unset, plain http), SameSite=None would be silently rejected by the browser,
+// so fall back to Lax there, which works fine for same-origin/proxied local dev.
+const COOKIE_SAME_SITE = COOKIE_SECURE ? 'none' : 'lax';
+
 function setAuthCookie(res, token, { rememberMe = false } = {}) {
     res.cookie(COOKIE_NAME, token, {
         httpOnly: true,
-        secure: process.env.COOKIE_SECURE === 'true',
-        sameSite: 'lax',
+        secure: COOKIE_SECURE,
+        sameSite: COOKIE_SAME_SITE,
         // Omitting maxAge makes it a session cookie, cleared when the browser closes.
         ...(rememberMe ? { maxAge: durationToMs(REMEMBER_EXPIRES_IN) } : {}),
     });
 }
 
 function clearAuthCookie(res) {
-    res.clearCookie(COOKIE_NAME);
+    // Browsers match cookies to clear by name/path/domain, but some are stricter
+    // about also matching Secure/SameSite than others — pass the same attributes
+    // used to set it so logout reliably clears the cookie in every browser.
+    res.clearCookie(COOKIE_NAME, { httpOnly: true, secure: COOKIE_SECURE, sameSite: COOKIE_SAME_SITE });
 }
 
 // Populates req.user if a valid token is present, but does not reject the request.
